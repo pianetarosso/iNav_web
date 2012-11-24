@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+
+{% if user.is_authenticated %}
+        {% if user.id != building.utente.id %}
+                {{building.utente.username}}
+        {% else %}
+                congratulazioni, questa mappa l'hai fatta tu!
+        {% endif %}
+{% else %}
+       {{building.utente.username}} 
+{% endif %}
+<ul>
+<li><a> {{building.nome}}</a></li>
+<li><a> {{building.versione}}</a></li>
+<li><a> {{building.latitudine}}</a></li>
+<li><a> {{building.longitudine}}</a></li>
+<li><a> {{building.numero_di_piani}}</a></li>
+</ul>
+<br><br>
+{% if floors%}
+<ul>
+{%for fl in floors%}
+<img src="{{MEDIA_URL}}{{fl.link}}" width=150 height=100>
+<li><a>{{fl.bearing}}<a><li>
+<li><a>{{fl.numero_di_piano}}<a><li>
+{%endfor%}
+{%endif%}
+
+{% endblock body%}
+

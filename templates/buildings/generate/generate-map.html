@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js"></script>
+
+        
+<script type="text/javascript">
+ 
+ function stopRefresh() {
+        return true;
+ }      
+ 
+ 
+        </script>
+
+        <applet name="mapGenerator"
+                id="mapGenerator"  
+                code="main.MapGenerator.class"
+                archive="{{STATIC_URL}}jar/MapGenerator.jar, 
+                                {{STATIC_URL}}jar/gson-2.2.2.jar,
+                                {{STATIC_URL}}jar/plugin.jar"
+                         >
+                        <param name=id value="{{building.id}}">
+                        <param name=piani value='{{floors}}'>  
+                MAYSCRIPT
+        </applet>
+
+
+        
+ 
+        
+        
+<br>
+
+{% endblock body %}

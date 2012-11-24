@@ -1,0 +1,142 @@
+html { 
+        height: 100%;
+        width:100%; 
+}
+
+body { 
+        padding:15px auto;
+        font-family: Arial, "MS Trebuchet", sans-serif;
+}
+
+header {
+        font-family: Arial, "MS Trebuchet", sans-serif;
+        background-color:orange;
+}
+
+footer {
+        clear:  both;
+        width: 100%;
+        display: block;
+        padding-top:10px;
+}
+
+footer#page_footer {
+        text-align:center;
+        background-color:orange;
+}
+
+p {
+        margin:0 0 20px 0;
+}
+
+
+#page_header nav ul, footer#page_footer nav ul {
+        list-style: none;
+        margin: 0;
+        padding-left: 0;
+}
+
+#page_header nav ul li, #page_footer nav ul li {
+        padding:0;
+        margin: 0 20px 0 0;
+        display:inline;
+}
+
+#title {
+        text-align:center;
+        font-size: 50px; 
+        font-weight: bold;
+        font-family: arial, verdana, sans-serif;
+}
+
+#navigation {
+        float:right;
+}
+
+header#navigation, header#user {
+        padding-left:5px;
+        padding-right:5px;
+}
+
+#user a{
+        text-transform:capitalize;
+        font-weight: bold;
+}
+
+#user {
+        margin-left:5px;
+}
+
+#profile_image {
+        border:1px solid blue;
+        padding:2px;
+        margin-bottom:2px;
+        margin-top:-50px;
+        margin-left:5px;
+}
+
+
+/*********************************************************************************/
+
+
+#container {
+        display:block;
+        width:100%;
+        padding:5px;
+}
+
+section#contents_left {
+        float: left;
+        width: 70%;
+        
+}
+
+section#right_panel {
+        float:right;
+        width: 30%;
+        
+}
+
+
+/*******************************************************************************/
+
+
+#map_canvas, #mapGenerator { 
+        height:400px;
+        width:95%; 
+        position:center;
+        border:1px solid blue;
+        padding:2px;
+        margin-bottom:5px;
+}
+
+#id_numero_di_piani {
+        width:35px;
+        float:left;
+}
+
+#input_numero_di_piani { 
+        overflow: hidden; 
+        width: 120px; 
+}
+.button { 
+        margin: 0 0 0 5px; 
+        text-indent: -9999px; 
+        cursor: pointer; 
+        width: 29px; 
+        height: 29px; 
+        float: right; 
+        text-align: center;
+}
+
+.errorlist {
+       list-style: none;
+       color: red; 
+       padding-left:0;
+       padding-bottom:0;
+}
+
+#id_descrizione {
+        width:250px;
+}
+

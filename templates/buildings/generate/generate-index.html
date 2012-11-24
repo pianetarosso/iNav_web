@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block imports %} 
+        
+        
+        <script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg&sensor=false&libraries=geometry">
+        </script>
+        <script type="text/javascript"
+        src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobubble/src/infobubble.js">
+        </script>
+
+        <script type="text/javascript"
+        src="{{STATIC_URL}}java/jquery-1.8.2.js">
+        </script>
+        
+        <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.index.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.geocoding.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.generatePolygon.js"> 
+       </script>
+       <script type="text/javascript"
+        src="{{STATIC_URL}}java/richmarker.js">
+        </script>
+        
+<script type="text/javascript">
+
+// VARIABILI /////////////////////////////////////////////////////////////////////////
+
+
+// contiene tutti i poligoni che saranno disegnati sulla mappa, compreso quello creato dall'utente
+var polygons = new google.maps.MVCArray();
+
+// mappa
+var map;
+
+// larghezza della mappa (in pixels)
+//var width = 0;
+
+var id = -1;
+
+var bounds = null;
+
+// booleano per stabilire se l'edificio è già stato disegnato oppure no
+
+var disegnato = false;
+var ready = false;
+
+
+// chiamata al loading della pagina
+function initialize() {
+        
+        id = {{ request.user.id }}
+        
+        // carico la mappa
+        loadMap();
+
+        // qui carico i poligoni di tutti i buildings        
+        loadAllPolygons();
+        
+        // inizializo le variabili globali del js
+        initializeJS(map, polygons);
+        
+        {% if building.geometria %}
+                
+                // genero il poligono dell'utente
+                polygons = parseJSONPolyline({{building.geometria.geojson|safe}}, id, polygons, map);
+                setUserPolygonReady();
+                
+                disegnato = true;
+                ready = true;
+        
+        {% else %}
+        
+                // abilito il disegno dell'edificio da parte dell'utente
+                polygons = disegna_edificio(polygons, id); 
+                
+                disegnato = false;
+                ready = true;
+        
+        {% endif %}
+                 
+}
+
+// passo il valore "disegnato" 
+function getDisegnato() {
+        return disegnato;
+}
+
+function setDisegnato(value) {
+        disegnato = value;
+}
+
+function getReady() {
+        return ready;
+}
+
+function getBounds() {
+        return bounds;
+}
+
+// Caricamento della mappa
+function loadMap() {
+
+        mapOptions = {
+                center: new google.maps.LatLng(-0, 0),
+                zoom: 1,
+                mapTypeId: google.maps.MapTypeId.HYBRID
+        };
+        
+        map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+        
+}
+
+// caricamento dei poligoni
+function loadAllPolygons() {
+
+        {% for b in buildings %}
+                polygons = parseJSONPolyline({{b.geometria.geojson|safe}}, {{b.utente.id}}, polygons, map);
+        {% endfor %}
+}
+
+var test = false;
+// funzione (chiamata anche dall'iframe) per convertire il poligono dell'utente, centrarlo e
+// disabilitarne il disegno
+function setUserPolygonReady() {
+               
+              
+                // converto il poligono generico (appena creato) in quello dell'utente
+                polygons = convertPolygonToNewBuildingPolygon(polygons, id);
+                
+                // imposto lo zoom e la posizione ottimali per visualizzare il poligono
+                bounds = setOptimalPanEZoom(polygons.getAt(polygons.length - 1));
+                
+                // blocco la possibilità di disegnare altri edifici
+                bloccaDisegno();
+        
+                // imposto la larghezza (in pixel) della mappa
+               // width = transformBuondsToPixels(bounds);
+                
+              //  google.maps.event.addListener(map, 'idle', function() {
+                        
+                document.getElementById('the_iframe').contentWindow.setBounds(bounds);
+                               // window.frames['iframe'].setBounds(bounds);
+                document.getElementById('the_iframe').contentWindow.setMap(map);
+                
+                google.maps.event.addListener(map, 'idle', function() {
+                        try {
+                                document.getElementById('the_iframe').contentWindow.setRadioButtonsEnabled(); 
+                        } catch (e) {
+                                google.maps.event.clearListeners(map, 'idle');
+                        }
+                                              
+                });  
+        
+           //     });
+           
+}
+
+// funzione usata per resettare l'altezza dell'iframe tra una pagina e l'altra
+function setHeight(value) {
+        document.getElementById('the_iframe').height= (value) + "px";
+}
+
+
+</script>
+{%endblock imports %}
+
+
+
+
+{% block body %}
+
+<body onload="initialize()">
+  
+    <input id="address" input type="text" style="color:#888;" 
+    value="Write an address here!" onfocus="inputFocus(this)" onblur="inputBlur(this)" />
+      <input type="button" value="Find!" onclick="codeAddress()">
+      
+    <div id="map_canvas"></div>
+
+</body>
+{% endblock body %}
+
+
+{% block extra_body %}          
+
+
+
+<iframe width="100%" id="the_iframe" name="iframe" onLoad="calcHeight();" src="{% url buildings.views.step new_id=building.pk %}"  height="1"> An iframe capable browser is required to view this web site. </iframe>
+
+<!-- seamless="seamless" scrolling="NO" frameborder="0" -->
+   
+{% endblock extra_body %} 

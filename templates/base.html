@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/style.css" />
+
+<div id="Imports">
+<!-- Blocchi per importare i Javascript -->
+{% block imports %}
+{% endblock imports %}
+</div>
+<!-- carico SEMPRE i dati dell'utente ed eventuali avatar -->
+{% load account %}
+{% load avatar_tags %}
+ 
+       
+<html>
+
+        <head>
+                <title>
+                        {% block head_title %}
+                                iNav, THE internal navigation App
+                        {% endblock head_title %}
+                </title>
+        </head>
+  
+  
+        <body>    
+  
+                <header id="page_header">
+  
+                        <h1 id="title">iNav</h1>
+                        
+                        
+                        
+                        {% if user.is_authenticated %}
+                                        <img id="profile_image" src="{% avatar_url user 80 %}"/>
+                                        <br>       
+                        {% endif %}
+                        
+                        <nav id="navigation">
+                        <ul>
+                                <li><a href="{% url buildings.views.index %}">Home</a></li>
+                                
+                                {% if user.is_authenticated %}
+                        
+                                         <li><a href="{% url buildings.views.profile %}">Profile</a></li> 
+                                         
+                                         
+                                        {% if user.is_superuser %}
+                                               <li><a href="{% url admin:index %}">Administration</a></li>
+                                        {% endif %}
+                                        
+                                        <li><a href="{% url buildings.views.generate new_id=-1 %}">New Building</a></li>
+                                        
+                                        <li><a href="{% url account_logout%}">Logout</a></li>
+                                        
+                                {% else %}
+                                
+                                        <li><a href="{% url account_login %}">Login</a></li>  
+                                        <li><a href="{% url account_signup %}">Sign up</a></li>
+                
+                                {% endif %}
+                                <!-- aggiungere INFO e My Buildings-->
+                        </ul>
+                        </nav>
+        
+                        <div id ="user" >
+    
+                                {% if user.is_authenticated %}
+                                        <p>Hello <a> {% user_display user %}</a>!</p>    
+                                {% else%}
+                                        <p>Welcome Guest!</p>                        
+                                {% endif %}
+    
+                        </div>
+        
+       
+        
+    
+        
+                </header>
+  
+  <div id="container">
+        <!-- testo principale -->
+        <section id="contents_left">
+                {% block body %}  
+                        {% block content %}
+                        {% endblock content %}
+                {% endblock body %}
+        </section>
+        
+        <!-- conterrà le azioni recenti degli utenti, e le proprie mappe una volta loggato -->
+        <section id="right_panel">
+        
+                {% block extra_body %}              
+                {% endblock extra_body %}  
+        </section>
+        
+  </div>
+    
+  <footer id="page_footer">
+    
+       <p> copright MF segnalazione a pippo ingarsia</p>
+  </footer>
+
+    
+ </body>
+</html>
+
+
