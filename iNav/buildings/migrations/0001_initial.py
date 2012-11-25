@@ -12,14 +12,14 @@ class Migration(SchemaMigration):
         db.create_table('buildings_building', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('utente', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('nome', self.gf('django.db.models.fields.CharField')(unique=True, max_length=200, blank=True)),
+            ('nome', self.gf('django.db.models.fields.CharField')(unique=True, max_length=200)),
             ('descrizione', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
             ('link', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
-            ('numero_di_piani', self.gf('django.db.models.fields.IntegerField')()),
+            ('numero_di_piani', self.gf('django.db.models.fields.IntegerField')(null=True)),
             ('foto', self.gf('django.db.models.fields.files.ImageField')(max_length=100, blank=True)),
-            ('versione', self.gf('django.db.models.fields.IntegerField')(blank=True)),
-            ('data_creazione', self.gf('django.db.models.fields.DateTimeField')(blank=True)),
-            ('data_update', self.gf('django.db.models.fields.DateTimeField')(blank=True)),
+            ('versione', self.gf('django.db.models.fields.IntegerField')()),
+            ('data_creazione', self.gf('django.db.models.fields.DateTimeField')()),
+            ('data_update', self.gf('django.db.models.fields.DateTimeField')()),
             ('pronto', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('posizione', self.gf('django.contrib.gis.db.models.fields.PointField')(unique=True, null=True)),
             ('geometria', self.gf('django.contrib.gis.db.models.fields.PolygonField')(null=True)),
@@ -30,7 +30,6 @@ class Migration(SchemaMigration):
         db.create_table('buildings_floor', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('id_edificio', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Building'])),
-            ('utente', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('immagine', self.gf('django.db.models.fields.files.ImageField')(max_length=100)),
             ('numero_di_piano', self.gf('django.db.models.fields.IntegerField')()),
             ('descrizione', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
@@ -43,23 +42,18 @@ class Migration(SchemaMigration):
         # Adding model 'Point'
         db.create_table('buildings_point', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('id_edificio', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Building'])),
             ('RFID', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('x', self.gf('django.db.models.fields.IntegerField')()),
             ('y', self.gf('django.db.models.fields.IntegerField')()),
-            ('numero_di_piano', self.gf('django.db.models.fields.IntegerField')()),
+            ('piano', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Floor'])),
             ('ingresso', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('ascensore', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
-            ('scala', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
-            ('stanza', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
         ))
         db.send_create_signal('buildings', ['Point'])
 
         # Adding model 'Room'
         db.create_table('buildings_room', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('id_edificio', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Building'])),
-            ('id_punto', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['buildings.Point'], unique=True)),
+            ('punto', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['buildings.Point'], unique=True)),
             ('nome_stanza', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('persone', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('altro', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
@@ -70,12 +64,11 @@ class Migration(SchemaMigration):
         # Adding model 'Path'
         db.create_table('buildings_path', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('id_edificio', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Building'])),
-            ('x', self.gf('django.db.models.fields.IntegerField')()),
-            ('y', self.gf('django.db.models.fields.IntegerField')()),
-            ('x1', self.gf('django.db.models.fields.IntegerField')()),
-            ('y1', self.gf('django.db.models.fields.IntegerField')()),
-            ('numero_di_piano', self.gf('django.db.models.fields.IntegerField')()),
+            ('piano', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['buildings.Floor'])),
+            ('a', self.gf('django.db.models.fields.related.ForeignKey')(related_name='path_A', to=orm['buildings.Point'])),
+            ('b', self.gf('django.db.models.fields.related.ForeignKey')(related_name='path_B', to=orm['buildings.Point'])),
+            ('ascensore', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
+            ('scala', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
         ))
         db.send_create_signal('buildings', ['Path'])
 
@@ -129,19 +122,19 @@ class Migration(SchemaMigration):
         },
         'buildings.building': {
             'Meta': {'object_name': 'Building'},
-            'data_creazione': ('django.db.models.fields.DateTimeField', [], {'blank': 'True'}),
-            'data_update': ('django.db.models.fields.DateTimeField', [], {'blank': 'True'}),
+            'data_creazione': ('django.db.models.fields.DateTimeField', [], {}),
+            'data_update': ('django.db.models.fields.DateTimeField', [], {}),
             'descrizione': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
             'foto': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'blank': 'True'}),
             'geometria': ('django.contrib.gis.db.models.fields.PolygonField', [], {'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'link': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'}),
-            'nome': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200', 'blank': 'True'}),
-            'numero_di_piani': ('django.db.models.fields.IntegerField', [], {}),
+            'nome': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200'}),
+            'numero_di_piani': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             'posizione': ('django.contrib.gis.db.models.fields.PointField', [], {'unique': 'True', 'null': 'True'}),
             'pronto': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'utente': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
-            'versione': ('django.db.models.fields.IntegerField', [], {'blank': 'True'})
+            'versione': ('django.db.models.fields.IntegerField', [], {})
         },
         'buildings.floor': {
             'Meta': {'object_name': 'Floor'},
@@ -152,29 +145,23 @@ class Migration(SchemaMigration):
             'immagine': ('django.db.models.fields.files.ImageField', [], {'max_length': '100'}),
             'numero_di_piano': ('django.db.models.fields.IntegerField', [], {}),
             'posizione_immagine': ('django.contrib.gis.db.models.fields.PointField', [], {'null': 'True'}),
-            'utente': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
             'zoom_on_map': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '5', 'decimal_places': '3'})
         },
         'buildings.path': {
             'Meta': {'object_name': 'Path'},
+            'a': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'path_A'", 'to': "orm['buildings.Point']"}),
+            'ascensore': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
+            'b': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'path_B'", 'to': "orm['buildings.Point']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'id_edificio': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['buildings.Building']"}),
-            'numero_di_piano': ('django.db.models.fields.IntegerField', [], {}),
-            'x': ('django.db.models.fields.IntegerField', [], {}),
-            'x1': ('django.db.models.fields.IntegerField', [], {}),
-            'y': ('django.db.models.fields.IntegerField', [], {}),
-            'y1': ('django.db.models.fields.IntegerField', [], {})
+            'piano': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['buildings.Floor']"}),
+            'scala': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
         },
         'buildings.point': {
             'Meta': {'object_name': 'Point'},
             'RFID': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
-            'ascensore': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'id_edificio': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['buildings.Building']"}),
             'ingresso': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'numero_di_piano': ('django.db.models.fields.IntegerField', [], {}),
-            'scala': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'stanza': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
+            'piano': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['buildings.Floor']"}),
             'x': ('django.db.models.fields.IntegerField', [], {}),
             'y': ('django.db.models.fields.IntegerField', [], {})
         },
@@ -182,11 +169,10 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Room'},
             'altro': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'id_edificio': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['buildings.Building']"}),
-            'id_punto': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['buildings.Point']", 'unique': 'True'}),
             'link': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'}),
             'nome_stanza': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
-            'persone': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
+            'persone': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
+            'punto': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['buildings.Point']", 'unique': 'True'})
         },
         'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},

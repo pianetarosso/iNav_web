@@ -274,39 +274,11 @@ def step(request, new_id):
                 points = []
                 paths = []
      
-                if request.method == 'POST':
-                        pointElements = request.POST['points']
-                        points = []
-                        for element in pointElements:
-                                pointForm = PointFormSet(element)
-                                if pointForm.is_valid():
-                                        points.append(parsePointPost(element, building))
-                                else:
-                                        return HttpResponse("DATA ERROR!") 
-                        
-                        pathElements = request.POST['paths']
-                        path = []
-                        for element in pathElements:
-                                pathForm = PathFormSet(element)
-                                if pathForm.is_valid():
-                                        path.append(parsePathPost(element, building))
-                                else:
-                                        return HttpResponse("DATA ERROR!")  
-                        
-                        for p in points:
-                                p.save()
-                        for p in paths:
-                                p.save()
-                                
-                        now = datetime.datetime.now()
-                        b.data_update = now
-                        b.data_creazione = now
-                        b.ready = True
-                        b.save()
+                
                         
                         # aggiungere il centraggio automatico sul building appena creato nell'index
                         # (basta controllare 
-                        return redirect('buildings/index.html')
+                return redirect('buildings/index.html')
         
         
         #print str(request.session.items())
@@ -320,54 +292,7 @@ def step(request, new_id):
      
         
    
-############################################################################################
 
-############################################################################################
-## SALVATAGGIO / AGGIORNAMETO DEI DATI TRAMITE JSON PER JAPPLET
-
-# Salvataggio dei nuovi punti, e cancellazione dei vecchi
-def postPoint(request, building_id="-1"):
-        building = get_object_or_404(Building, pk=building_id)
-        if request.method == 'POST': 
-                oldPoints = Point.objects.filter(id_edificio=building_id)
-                
-                newPoints = []
-                for element in request.POST:
-                        pointForm = PointFormSet(element)
-                        if pointForm.is_valid():
-                                newPoints.append(parsePointPost(element, building))
-                        else:
-                                return HttpResponse("DATA ERROR!")  
-                        
-                oldPoints.delete()  
-                for point in newPoints:
-                        point.save()
-                                  
-                return HttpResponse("SAVED")
-        raise Http404 
-       
-# Salvataggio delle nuove path, e cancellazione delle vecchie
-def postPath(request, building_id="-1"):
-        building = get_object_or_404(Building, pk=building_id)
-        if request.method == 'POST': 
-                oldPaths = Path.objects.filter(id_edificio=building_id)
-                
-                newPaths = []
-                for element in request.POST:
-                        pathForm = PathFormSet(element)
-                        if pathForm.is_valid():
-                                newPaths.append(parsePathtPost(element, building))
-                        else:
-                                return HttpResponse("DATA ERROR!")  
-                        
-                oldPaths.delete()  
-                for path in newPaths:
-                        path.save()
-                                  
-                return HttpResponse("SAVED")
-        raise Http404 
-   
-   
    
 ############################################################################################
    
@@ -411,30 +336,7 @@ def getFloors(request, building_id="-1"):
         return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
        
-# recupero i punti di un determinato edificio
-@csrf_exempt
-def getPoints(request, building_id="-1"):
-        if building_id!="-1":
-                building = get_object_or_404(Building, pk=building_id, pronto=True)
-                points = get_object_or_404(Point, id_edificio=building_id)
-                data = []
-                for p in points:
-                        data.append(parsePoint(p))
-                return HttpResponse(simplejson.dumps(data), mimetype="application/json")
-        raise Http404 
-                
-                
-# recupero i percorsi di un determinato edificio
-@csrf_exempt
-def getPaths(request, building_id="-1"):
-        if building_id!="-1":
-                building = get_object_or_404(Building, pk=building_id, ready=True)
-                paths = get_object_or_404(Path, id_edificio=building_id)
-                data = []
-                for p in paths:
-                        data.append(parsePath(p))
-                return HttpResponse(simplejson.dumps(data), mimetype="application/json")
-        raise Http404 
+
 
 ############################################################################################
 
@@ -569,4 +471,7 @@ def setBearingimage(request, width, idf, id_b):
 
 ############################################################################################
 
- 
+############################################################################################
+
+############################################################################################
+
