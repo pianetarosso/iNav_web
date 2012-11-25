@@ -1,4 +1,7 @@
 *.log
+*.jpg
+*.jpeg
 *.pot
 *.pyc
+*.JPG
 local_settings.py

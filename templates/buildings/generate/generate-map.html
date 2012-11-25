@@ -11,6 +11,16 @@
         return true;
  }      
  
+ function getFloors() {
+        var xmlHttp = null;
+
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
+        xmlHttp.send( null );
+        return JSON.parse(xmlHttp.responseText);
+        
+ }
+ 
  
         </script>
 
@@ -18,11 +28,8 @@
                 id="mapGenerator"  
                 code="main.MapGenerator.class"
                 archive="{{STATIC_URL}}jar/MapGenerator.jar, 
-                                {{STATIC_URL}}jar/gson-2.2.2.jar,
-                                {{STATIC_URL}}jar/plugin.jar"
-                         >
+                                {{STATIC_URL}}jar/plugin.jar">
                         <param name=id value="{{building.id}}">
-                        <param name=piani value='{{floors}}'>  
                 MAYSCRIPT
         </applet>
 

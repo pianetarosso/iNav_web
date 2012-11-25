@@ -394,23 +394,22 @@ def postPath(request, building_id="-1"):
 # recupero i piani di un determinato edificio
 #@csrf_exempt
 @login_required
-def getFloors(request, building_id="-1", utente="-1"):
-        if building_id!="-1" and utente != "-1":
+def getFloors(request, building_id="-1"):
+         
+        building = get_object_or_404(Building, pk=building_id )
+        user = get_object_or_404(User, pk=request.user.pk)
                 
-                building = get_object_or_404(Building, pk=building_id )
-                user = get_object_or_404(User, pk=utente)
-                
-                if building.utente != user or building.pronto:
-                        raise Http404
+        if building.utente != user or building.pronto:
+                raise Http404
                     
-                floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), id_edificio=building_id)
+        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), id_edificio=building_id)
                 
-                data = []
-                for f in floors:
-                        data.append(parseFloor(f))
+        data = []
+        for f in floors:
+                data.append(parseFloor(f))
                 
-                return HttpResponse(simplejson.dumps(data), mimetype="application/json")
-        raise Http404 
+        return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
        
 # recupero i punti di un determinato edificio
 @csrf_exempt
