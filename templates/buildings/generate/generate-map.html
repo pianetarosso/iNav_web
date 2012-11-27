@@ -127,9 +127,7 @@
  // questa funzione ridimensiona l'iFrame in base agli elementi mostrati
  function resizeIframe(value) {
          var new_heigth = $("#the_iframe").contents().find("body").outerHeight(true) + value;
-         console.log($("#the_iframe").contents().find("body").outerHeight(true));
-         console.log(value);
-         console.log(new_heigth)
+         
         $("#the_iframe").animate(
             {height: $("#the_iframe").contents().find("body").outerHeight(true) + value},
             "slow",

@@ -1,163 +1,213 @@
 
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js"></script>
 
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/step3.graphic.js">
+        </script>
 
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/step3.marker.js">
+        </script>
         
 <script type="text/javascript">
 
-        var number_of_people = 1;
-        
         function initialize() {
         
+                // blocco o forzo il refresh della pagina principale
                 try {
                         window.top.stopRefresh();
                 } catch (e) {
                         parent.location.reload(true);
                 }
                 
+                // "nascondo" tutte le form al caricamento della pagina
                 $(".app_input").hide();
+        }
+  
+ 
+ 
+ 
+ 
+ 
+        
+    /*    
+        
+        
+        function getData(marker) { 
+                var RFID;
+                if (document.getElementById("marker_RFID").checked) {
+                        var value = document.getElementById("marker_text").value;
+                        if (value == "")
+                                
+                
+                
+                }
                 
         
-
-    $(".button").parent().find("input").prop('readonly', "readonly");
-    $(".button").click(function() {
-        var $button = $(this);
-        heigth = 26;
-        console.log("call!!!");
-        if (($button.text() == "+") && (number_of_people < 11)) {
-    	  var newform = document.createElement('input');
-                newform.id = "room_people_" + number_of_people;
-                newform.type = "text";
-                newform.maxlength = "100";
-                document.getElementById("room_peoples").appendChild(newform);
-                number_of_people++;
-                window.top.resizeIframe(heigth);
-    	  }
-    	else if (number_of_people > 1) {
-    	        var rform = document.getElementById("room_people_"+(number_of_people-1));
-                if (rform.value == "") {
-                        document.getElementById("room_peoples").removeChild(rform);
-                        number_of_people--;
-                        window.top.resizeIframe(-1 * heigth);
-                }
-    	}
-    });
-
-}
-
-function removePeople() {        
-        for (var i=1; i < number_of_people; i++) {
-                var rform = document.getElementById("room_people_"+i);
-                document.getElementById("room_peoples").removeChild(rform);
-                window.top.resizeIframe(-26);
         }
         
-        number_of_people = 1;
-}
-    
-        var displayed_list = {};
-        function resize(name) {
-                    heigth = $("#"+name + "_input").height(); 
-                    
-                    if (displayed_list[name] == null)
-                        displayed_list[name] = false;
+        function getRFID() {
+                if (document.getElementById("marker_RFID").checked) {
+                
+                
+                }
+                return        
+        }
+        
+        function setRFID(rfid) {
+                document.getElementById("marker_RFID").click();
+                document.getElementById("marker_text").value = rfid;
+        }
+        
+        function setRoom(room) {
+                document.getElementById("marker_room").click();
+                if (room.nome_stanza != null)
+                        document.getElementById("room_name").value = room.nome_stanza;
+                if (room.link != null)
+                        document.getElementById("room_link").value = room.link;
+                if (room.persone != null)
+                        document.getElementById("room_peoples").value = room.persone;
+                if (room.altro != null)
+                        document.getElementById("room_notes").value = room.altro;
+        }
+        
+        function setElevator(path) {
+                document.getElementById("marker_elevator").click();
+        
+        }
+ */       
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER LA VALIDAZIONE DEI CAMPI DI INPUT
+
+        // dizionario per contenere i campi validi
+        var valid_input = {};
+        function validateFields(input) {
+                 var test = true;
+                if (input.name == "RFID") {
+                        for (var i in markers) 
+                                test = test && (input.value != markers[i].RFID);
+                }
                         
-                    if (displayed_list[name]) {
-                        $("#"+name + "_input").slideToggle();
-                        window.top.resizeIframe(-1 * heigth);
-                        displayed_list[name] = false;
-                        clearChildren(document.getElementById(name + "_input"));
-                    }
-                    else {
-                        window.top.resizeIframe(heigth);
-                        $("#"+name + "_input").slideToggle();
-                        displayed_list[name] = true;
-                    }
+                if (input.name == "room") {
+                        for (var i in markers) 
+                                test = test && (input.value != markers[i].nome_stanza);
+                } 
+                                
+                if ((!input.validity) || (input.value == "") || (!test)) {
+                        input.style.background = "red";
+                        valid_input[input.name] = false;
+                        console.log(valid_input);
+                }
+                else {
+                        input.style.background = "";
+                        valid_input[input.name] = true;
+                }
+                
+                validateSaveButton();
         }
-        
-        checkBox = ['room', 'elevator', 'stair']
-        function disableCheckBoxs(value) {
-        
-                boolean = document.getElementById("marker_"+value).checked;
 
-                for(var i in checkBox) {
-                        if (checkBox[i] != value)
-                                document.getElementById("marker_"+checkBox[i]).disabled = boolean;
-                }
-        }
-        
-        // "Pulisco" i valori delle form
-        function clearChildren(element) {
-        
-                removePeople();
-                for (var i = 0; i < element.childNodes.length; i++) {
-                        var e = element.childNodes[i];
+        // fa i test per abilitare o no il savebutton
+        function validateSaveButton() {
+                var test = false;
+                
+                for (var p in valid_input) 
+                        test = test || valid_input[p];
                         
-                        if (e.tagName) switch (e.tagName.toLowerCase()) {
-                                case 'input':
-                                        switch (e.type) {
-                                               case "radio":
-                                               case "checkbox": if (e.checked) e.click(); break;
-                                               case "button":
-                                               case "submit":
-                                               case "image": break;
-                                                default: e.value = ''; break;
-                                        }
-                                        break;
-                                case 'select': e.selectedIndex = 0; enableNewId(e.name); break;
-                                case 'textarea': e.innerHTML = ''; break;
-                                default: clearChildren(e);
-                        }
+                disableSaveButton(!test);
+        }
+        
+        // funzione chiamata quando viene eliminata una form
+        function removeValidation(value) {
+                delete(valid_input[value]);
+                validateSaveButton();
+        }
+
+        // nelle option, alla voce Ascensore o Scala,
+        // abilito o disabilito il campo "new_id" a seconda del valore selezionato
+        // nel menu a tendina (aggiunta validazione)
+        function enableNewId(value) {
+                test = document.getElementById(createOptionId(value)).selectedIndex != 0;
+                if (test) {
+                        document.getElementById(createOptionNewidId(value)).value = "";
+                        document.getElementById(createOptionNewidId(value)).style.background = "";
+                        valid_input[value] = true;
                 }
+                else
+                        valid_input[value] = false;
+                document.getElementById(createOptionNewidId(value)).disabled = test;
+                
+                validateSaveButton();
         }
         
-       // nelle option, abilito o disabilito il campo "new_id" a seconda del valore selezionato
-       function enableNewId(value) {
-                test = document.getElementById(value+"_options").selectedIndex != 0;
-                document.getElementById(value+"_new_id").disabled = test;
-                if (test)
-                        document.getElementById(value+"_new_id").value = "";
+        // test di validazione per i campi immissione in Ascensore/Scala
+        function testIfText(input) {
+                if (input.value != "") 
+                        input.style.background = "";
+                else
+                        input.style.background = "red";
+                        
+                valid_input[value] = input.value != "";
+                validateSaveButton();
         }
-        
-     
+ 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER ASTRARRE LA CREAZIONE DI ID HTML E L'ABILITAZIONE DEI PULSANTI DALLE ALTRE FUNZIONI
+
+        // funzione per abilitare/disabilitare il pulsante di salvataggio       
+        function disableSaveButton(value) {
+                document.getElementById("saveNewMarker").disabled = value;
+        }       
+
+        // funzione per la costruzione dell'id dei campi input in base al valore passato
+        function createInputId(name) {
+                return name + "_input";
+        }
+
+        // funzione per la costruzione dell'id dei checkBox in base al valore passato
+        function createCheckBoxId(name) {
+                return "marker_" + name;
+        }
+
+        // funzione per la costruzione dell'id delle Options in base al valore passato
+        function createOptionId(name) {
+                return name + "_options";
+        }
+
+        // funzione per la costruzione dell'id dei campi testo delle Options in base al valore passato
+        function createOptionNewidId(name) {
+                return name + "_new_id";
+        }
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////   
+
+
 </script>
  
 <body onload="initialize()">
 
 
 <div id="marker_input" class="app_input"> 
-        <input type="checkbox" id="marker_RFID" onchange="resize('RFID')">RFID</input></br>
+
+<!-- RFID -->
+        <input type="checkbox" id="marker_RFID" onchange="resize('RFID'); removeValidation('RFID')">RFID</input></br>
         <div id=RFID_input class="app_input">
-                <input id="RFID_text" type="text" maxlength="200"/></br>
+                <input id="RFID_text" type="text" name="RFID" maxlength="200" oninput="validateFields(this)"/></br>
         </div>
 
-        <input type="checkbox" name="marker_type" onclick="resize('room'); disableCheckBoxs('room');" id="marker_room" >Room</input><br>
+
+<!-- ROOM -->
+        <input type="checkbox" name="marker_type" onclick="resize('room'); disableCheckBoxes('room'); removeValidation('room')" id="marker_room" >Room</input><br>
         
         <div id="room_input" class="app_input" >
-                Name: <input id="room_name" type="text" maxlength="50"/></br>
+                Name*: <input id="room_name" type="text" name ="room" maxlength="50" oninput="validateFields(this)"/></br>
                 Link: <input id="room_link" type="text" maxlength="100"/></br>
-                
-                <div id="room_peoples"style="display:inline;">
-                People: <input id="room_people_0" type="text" maxlength="100"/>
-                <span class="inc button" 
-                style="background: url({{STATIC_URL}}images/buttons.png) 
-                        no-repeat; 
-                        background-position: 0 -29px;
-                        float:right;
-                        width:29;
-                        height: 29;">-</span>
-                <span class="dec button"
-                style="background: url({{STATIC_URL}}images/buttons.png) 
-                        no-repeat;
-                        float:right;
-                        width:29;
-                        height:29;">+</span>
-                </div>
-                </br>
+                People: <input id="room_people" type="text" maxlength="200"/>                
                 Notes: <input id="room_notes" type="text" maxlength="200"/></br>
         </div>
-        
-        <input type="checkbox" name="marker_type" onclick="resize('elevator'); disableCheckBoxs('elevator');" id="marker_elevator" >Elevator</input><br>
+       
+
+<!-- ELEVATOR -->
+        <input type="checkbox" name="marker_type" onclick="resize('elevator'); disableCheckBoxes('elevator'); removeValidation('elevator')"" id="marker_elevator" >Elevator</input><br>
         
         <div id="elevator_input"class="app_input">
                 <select id="elevator_options" name="elevator" onchange="enableNewId('elevator')">
@@ -165,11 +215,12 @@ function removePeople() {
                         <option value="1">test</option>               
                 </select>
                 </br>
-                Create a new id: <input id="elevator_new_id" type="text" maxlength="50"/></br>
+                Create a new id: <input id="elevator_new_id" type="text" maxlength="50" oninput="testIfText(this)"/></br>
         </div>
         
-        
-        <input type="checkbox" name="marker_type" onclick="resize('stair'); disableCheckBoxs('stair');" id="marker_stair" >Stair</input><br>
+     
+<!-- STAIR -->  
+        <input type="checkbox" name="marker_type" onclick="resize('stair'); disableCheckBoxes('stair'); removeValidation('stair')"" id="marker_stair" >Stair</input><br>
 
         <div id="stair_input" class="app_input">
                 <select id="stair_options" name ="stair" onchange="enableNewId('stair')">
@@ -177,10 +228,13 @@ function removePeople() {
                         <option value="1">test</option>               
                 </select>
                 </br>
-                Create a new id: <input id="stair_new_id" type="text" maxlength="50"/></br>
+                Create a new id: <input id="stair_new_id" type="text" maxlength="50" oninput="testIfText(this)"/></br>
         </div>
         
         
+<!-- BUTTON SAVE AND CANCEL -->
+        <button id="saveNewMarker" onclick="saveNewMarker()" disabled="true">Save</button>
+        <button onclick="removeNewMarker()">Cancel</button>
         
         
 
