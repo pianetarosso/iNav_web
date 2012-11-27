@@ -53,7 +53,7 @@ class Floor(models.Model):
    # link = models.ImageField(upload_to=content_file_name, blank=True)
         
         # edificio di riferimento
-        id_edificio = models.ForeignKey(Building)
+        building = models.ForeignKey(Building)
         
         # dati vari del piano
         immagine = models.ImageField(upload_to='floors')
@@ -68,15 +68,18 @@ class Floor(models.Model):
  # modificare per usare class PointField (verificare qual'e' il migliore srid)  
 class Point(models.Model):
 
+        # edificio di riferimento
+        building = models.ForeignKey(Building)
+        
+        # piano su cui si trova il punto
+        piano = models.ForeignKey(Floor)
+        
         # RFID
         RFID = models.CharField(max_length=200, blank=True)
         
         # posizione dei punti sull'immagine
         x = models.IntegerField()
         y = models.IntegerField()
-        
-        # piano su cui si trova il punto
-        piano = models.ForeignKey(Floor)
         
         # valore booleano che indica se quello e' un ingresso
         ingresso = models.BooleanField()
@@ -85,23 +88,26 @@ class Point(models.Model):
     
 class Room(models.Model):
             
-            # punto di riferimento
-            punto = models.OneToOneField(Point)
+        # edificio di riferimento
+        building = models.ForeignKey(Building)
+        
+        # punto di riferimento
+        punto = models.OneToOneField(Point)
             
-            # altri parametri descrittivi
-            nome_stanza = models.CharField(max_length=200, blank=True)
-            persone = models.CharField(max_length=200, blank=True)
-            altro = models.CharField(max_length=200, blank=True)
-            link = models.URLField(blank=True)
+        # altri parametri descrittivi
+        nome_stanza = models.CharField(max_length=200, blank=True)
+        persone = models.CharField(max_length=200, blank=True)
+        altro = models.CharField(max_length=200, blank=True)
+        link = models.URLField(blank=True)
             
-            def __unicode__(self):
-                        return self.nome_stanza
+        def __unicode__(self):
+                return self.nome_stanza    
     
 # modificare con class MultiLineStringField per contenere tutte le path di un piano in un solo oggetto
 class Path(models.Model):
 
-        # piano su cui si trova il percorso
-        piano = models.ForeignKey(Floor)
+        # edificio di riferimento
+        building = models.ForeignKey(Building)
         
         # punto di partenza
         a = models.ForeignKey(Point, related_name='path_A')

@@ -43,7 +43,7 @@ def index(request):
 def detail(request, building_id):
         session = {}
         b = get_object_or_404(Building, pk=building_id)
-        fl = Floor.objects.filter(id_edificio=building_id).order_by('numero_di_piano')
+        fl = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
         session['floors'] = fl
         session['building'] = b
         return render_to_response('buildings/detail.html', session, context_instance = RequestContext(request))
@@ -60,6 +60,7 @@ def profile(request):
 
 
 @login_required
+# new_id e' l'id dell'edificio che viene instanziato all'apertura della pagina
 def generate(request, new_id):
         session = {}
         
@@ -68,11 +69,13 @@ def generate(request, new_id):
         except Exception: 
                 raise Http404
         
+        # verifico se l'utente e' abilitato a creare un nuovo edificio, o se ne ha gia' troppi
+        # in "cantiere"
         if b_id == -1:
-        
-                other_buildings = Building.objects.filter(utente=request.user, pronto=False)
                 
-                if len(other_buildings) > MAX_TEMPORARY_BUILDINGS:
+                other_buildings = Building.objects.filter(utente=request.user, pronto=False)
+
+                if len(other_buildings) >= MAX_TEMPORARY_BUILDINGS:
                         return redirect('buildings.views.index')
                 else:
                         now = datetime.datetime.now()
@@ -81,35 +84,40 @@ def generate(request, new_id):
                         
                         return redirect('buildings.views.generate', new_id=building.pk)
          
-        elif b_id >=0:
+        # l'edificio esiste gia', ergo decido quali dati mandare a seconda del punto del wizard
+        elif b_id >= 0:
         
                 building = get_object_or_404(Building, pk=b_id)
-                floors = Floor.objects.filter(utente=request.user, id_edificio=building)
+                floors = Floor.objects.filter(building=building)
                 
+                # verifico se e' stato impostato il bearing agli edifici
                 test_bearing = len(floors) > 0
-                
                 for f in floors:
                        test_bearing = test_bearing and (f.bearing != None)  
                 
-                
+                # due casi "limite"
                 if building.utente != request.user:
                         raise Http404
                 elif building.pronto:
                         return redirect('buildings.views.detail', building_id=b_id)
+                # se non e' stato impostato il bearing ci troviamo nel 3o step (JApplet)
                 elif test_bearing:
                         session['building'] = building
-                        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), id_edificio=b_id)
+                        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), building=b_id)
                         data = []
+                        
+                        # costruisco un JSON con alcuni dati dei piani
                         for f in floors:
                                 data.append(parseFloor(f))
                         session['floors'] = simplejson.dumps(data)
                         
                         return render_to_response('buildings/generate/generate-map.html', session, context_instance = RequestContext(request))
-                        
+                     
+                # verifico il nome dell'edificio, se e' lo stesso del momento della costruzione
+                # allora mi trovo ancora nel primo step   
                 elif building.nome == str(request.user) + str(building.data_creazione):
                         buildings= Building.objects.filter(pronto=True).order_by('utente')
-                        session['buildings'] = buildings
-                        
+                        session['buildings'] = buildings       
                 session['building'] = building                        
         else:
                 raise Http404
@@ -118,32 +126,32 @@ def generate(request, new_id):
 
 
 @login_required
+# new_id e' l'id del nuovo edificio, si occupa l'oggetto soprastante di impostarlo
 def step(request, new_id):
         
-
         session ={}
         
         b = get_object_or_404(Building, pk=new_id)
         
         if b.utente != request.user or b.pronto:
                 raise Http404
-                
+         
+               
         if b.nome == str(request.user) + str(b.data_creazione):
-        
                 step = 0
-                
         else:
-        
-                if len(Floor.objects.filter(id_edificio=b.id)) == 0:
+                if len(Floor.objects.filter(building=b.id)) == 0:
                         step = 1
                 
-                elif len(Floor.objects.filter(id_edificio=b.id).exclude(bearing=None)) == 0:
+                elif len(Floor.objects.filter(building=b.id).exclude(bearing=None)) == 0:
                         step = 2
                         
-                elif len(Point.objects.filter(id_edificio=b.id)) == 0 and len(Path.objects.filter(id_edificio=b.id)) == 0:
+                elif len(Point.objects.filter(building=b.id)) == 0 and len(Path.objects.filter(building=b.id)) == 0:
                         step = 3
                 else:
-                        step = 4
+                        print "Errore"
+                        print str(b)
+                        raise Http404
                      #   b.pronto = True
                      #   b.save()
                      #   return redirect('index')
@@ -175,11 +183,10 @@ def step(request, new_id):
                                 step += 1
                         else:
                                 session['form'] = form
-                else:
-                             
+                else:   
                         form = BuildingForm(initial={'numero_di_piani' : 1})
                         session['form'] = form
-                    
+                 
    
    # Passo 1:
    #    Creazione dei piani in base ai dati forniti in precedenza
@@ -198,8 +205,7 @@ def step(request, new_id):
                         if form.is_valid():
                                 for f in form.forms:
                                         floor = f.save(commit=False)
-                                        floor.id_edificio = b 
-                                        floor.utente = request.user
+                                        floor.building = b 
                                         floor.bearing = None
                                         floor.zoom_on_map = None
                                         floor.posizione_immagine = None
@@ -224,7 +230,7 @@ def step(request, new_id):
    
         if step == 2:
         
-                floors = Floor.objects.filter(id_edificio=b.id).order_by("numero_di_piano")
+                floors = Floor.objects.filter(building=b.id).order_by("numero_di_piano")
                 FloorFormSet = formset_factory(AlternateFloorForm, extra=b.numero_di_piani,  formset=BaseAlternateFloorFormSet)
                 
                 if request.method == 'POST':
@@ -269,16 +275,72 @@ def step(request, new_id):
    #    Salvataggio di TUTTO
         if step == 3:
      
-                floors = Floor.objects.filter(id_edificio=b.id).order_by('numero_di_piano')
                 
-                points = []
-                paths = []
-     
+                PointFSet = formset_factory(PointForm, formset=PointFormSet)
+                PathFormSet = formset_factory(PathForm)
+                RoomFormSet = formset_factory(RoomForm)
                 
+                if request.method == 'POST':
+                
+                       
                         
-                        # aggiungere il centraggio automatico sul building appena creato nell'index
-                        # (basta controllare 
-                return redirect('buildings/index.html')
+                        point_formset = PointFSet(request.POST, prefix='points')
+                        path_formset = PathFormSet(request.POST, prefix='paths')
+                        room_formset = RoomFormSet(request.POST, prefix='rooms')
+                        
+                        if point_formset.is_valid() and path_formset.is_valid() and room_formset.is_valid():
+                         
+                                floors = Floor.objects.filter(building=b.id).order_by('numero_di_piano')
+                                
+                                # costruisco il dizionario dei punti, salvandoli nel db
+                                # {'temp_id' : point}      
+                                points = {}
+                                for form in point_formset.forms:
+                                         
+                                        piano = form.cleaned_data['piano']
+                                        
+                                        point = form.save(commit=False)
+                                        
+                                        for floor in floors:
+                                                if floor.pk == floor_id:
+                                                       point.piano = floor.id
+                                                       break
+                                                       
+                                        point.building = b.id
+                                        temp_id = point.id
+                                        point.id = None
+                                        points[point.id] = point.save()
+                                         
+                                # salvo le paths
+                                for form in path_formset.forms:
+                                        path = form.save(commit=False)
+                                        
+                                        path.a = points[path.a]
+                                        path.b = points[path.b]
+                                        
+                                        path.building = b.id
+                                        
+                                        path.save()    
+                                                     
+                                # salvo le rooms
+                                for form in room_formset.forms:
+                                        room = form.save(commit=False)
+                                        
+                                        room.punto = points[room.punto]
+                                        room.building = b.id
+                                        
+                                        room.save()     
+                                
+       
+                        else:
+                                session['pointForm'] = point_formset    
+                                session['pathForm'] = path_formset  
+                                session['roomForm'] = room_formset
+                
+                else:
+                        session['pointForm'] = PointFSet(prefix='points')     
+                        session['pathForm'] = PathFormSet(prefix='paths')  
+                        session['roomForm'] = RoomFormSet(prefix='rooms')
         
         
         #print str(request.session.items())
@@ -286,6 +348,7 @@ def step(request, new_id):
         session['building'] = b
         session['step'] = step
         #print session
+        
         return render_to_response('buildings/generate/step'+ str(step) +'.html', session,  context_instance = RequestContext(request))
      
      
@@ -327,7 +390,7 @@ def getFloors(request, building_id="-1"):
         if building.utente != user or building.pronto:
                 raise Http404
                     
-        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), id_edificio=building_id)
+        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), building=building_id)
                 
         data = []
         for f in floors:
@@ -370,7 +433,8 @@ def parseFloor(f):
         floor = {
                 'numero_di_piano' : f.numero_di_piano,
                 'bearing' : str(f.bearing),
-                'link' : f.immagine.url
+                'link' : f.immagine.url,
+              #  'id' : f.id
         } 
         return floor 
         

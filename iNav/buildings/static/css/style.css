@@ -119,6 +119,8 @@ section#right_panel {
         overflow: hidden; 
         width: 120px; 
 }
+
+
 .button { 
         margin: 0 0 0 5px; 
         text-indent: -9999px; 
@@ -138,5 +140,10 @@ section#right_panel {
 
 #id_descrizione {
         width:250px;
+}
+
+.app_input {
+        position: absolute, 
+        display: block
 }
 

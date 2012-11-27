@@ -3,13 +3,115 @@
 
 {% block body %}
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js"></script>
-
         
 <script type="text/javascript">
+
+ var counter = {};
  
  function stopRefresh() {
         return true;
- }      
+ } 
+ 
+ 
+ 
+ function couples(name, value) {
+        this.name = name;
+        this.value = value;
+ }
+ 
+ function Point(piano, RFID, x, y, ingresso) {
+ 
+        this.form_id = "pointForm";
+        this.name = "points";         
+        
+        this.piano = new couples("piano", piano);
+        this.RFID = new couples("RFID", RFID);
+        this.x = new couples("x", x);
+        this.y = new couples("y", y);
+        
+        if (ingresso)
+                this.ingresso = new couples("ingresso", "True");
+        else
+                this.ingresso = new couples("ingresso", "False");
+ 
+        this.array = array;
+        function array() {
+                return [this.piano, this.RFID, this.x, this.y, this.ingresso]; 
+        }
+ }
+ 
+ function Path(a, b, ascensore, scala) {
+ 
+        this.form_id = "pathForm";
+        this.name = "paths";         
+        
+        this.a = couples("a", a);
+        this.b = couples("b", b);
+        this.ascensore = couples("ascensore", ascensore);
+        this.scala = couples("scala", scala);
+ 
+        this.array = array;
+        function array() {
+                return [this.a, this.b, this.ascensore, this.scala]; 
+        }
+ }
+ 
+ function Room(punto, nome_stanza, persone, altro, link) {
+ 
+        this.form_id = "roomForm";
+        this.name = "rooms";         
+        
+        this.punto = couples("punto", punto);
+        this.nome_stanza = couples("nome_stanza", nome_stanza);
+        this.persone = couples("persone", persone);
+        this.altro = couples("altro", altro);
+        this.link = couples("link", link);
+ 
+        this.array = array;
+        function array() {
+                return [this.punto, this.nome_stanza, this.persone, this.altro, this.link]; 
+        }
+        
+ }
+ 
+ function addInput(element) {
+ 
+        ID = "id_";
+        
+        var iframe = document.getElementById('the_iframe');
+        var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+        var form = innerDoc.getElementById(element.form_id);
+
+        var number = counter[element.name];
+        
+        if (number == null) 
+                number = 0;
+        else
+                number++;
+
+        var elements = element.array();
+        
+        for (var i in elements) {
+                var newform = innerDoc.createElement('input');
+                newform.type = "hidden";
+                newform.id = ID + element.name + "-" + number + "-" + elements[i].name;
+                newform.name = element.name + "-" + number + "-" + elements[i].name;
+                newform.value = elements[i].value;
+                form.appendChild(newform);
+        }
+        
+        counter[element.name] = number;
+        
+        return number;
+ }
+ 
+ 
+ function createPoint(piano, RFID, x, y, ingresso) {
+        var p = new Point(piano, RFID, x, y, ingresso);
+        return JSON.parse(addInput(p));
+ }
+ 
+ 
  
  function getFloors() {
         var xmlHttp = null;
@@ -17,8 +119,22 @@
         xmlHttp = new XMLHttpRequest();
         xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
         xmlHttp.send( null );
+        console.log(xmlHttp.responseText);
         return JSON.parse(xmlHttp.responseText);
         
+ }
+ 
+ // questa funzione ridimensiona l'iFrame in base agli elementi mostrati
+ function resizeIframe(value) {
+         var new_heigth = $("#the_iframe").contents().find("body").outerHeight(true) + value;
+         console.log($("#the_iframe").contents().find("body").outerHeight(true));
+         console.log(value);
+         console.log(new_heigth)
+        $("#the_iframe").animate(
+            {height: $("#the_iframe").contents().find("body").outerHeight(true) + value},
+            "slow",
+            "swing"
+        );
  }
  
  
@@ -40,4 +156,11 @@
         
 <br>
 
+<button onClick="test()"> test</button>
 {% endblock body %}
+
+{% block extra_body %}
+
+<iframe width="100%" id="the_iframe" name="iframe" onLoad="calcHeight();" src="{% url buildings.views.step new_id=building.pk %}"  height="1" > An iframe capable browser is required to view this web site. </iframe>
+
+{% endblock extra_body %}

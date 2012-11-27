@@ -2,6 +2,7 @@ from buildings.models import *
 from django.forms import *
 from django import forms
 from django.forms.formsets import *
+from PIL import Image
                 
 
 # FORM DELL'EDIFICIO
@@ -48,7 +49,7 @@ class BuildingForm(ModelForm):
 class FloorForm(ModelForm):
         class Meta:
                 model = Floor
-                exclude = ('id_edificio', 'utente', 'bearing', 'zoom_on_map', 'posizione_immagine')
+                exclude = ('building', 'utente', 'bearing', 'zoom_on_map', 'posizione_immagine')
   
   
 # RELATIVO FORMSET PER INSERIRE LE IMMAGINI              
@@ -79,7 +80,7 @@ class BaseFloorFormSet(BaseFormSet):
 class AlternateFloorForm(ModelForm):
         class Meta:
                 model = Floor
-                exclude = ('id_edificio', 'numero_di_piano', 'immagine', 'id', 'descrizione', 'utente')
+                exclude = ('building', 'numero_di_piano', 'immagine', 'id', 'descrizione', 'utente')
                 
                 widgets = {
                         'bearing' : HiddenInput(),
@@ -107,30 +108,22 @@ class BaseAlternateFloorFormSet(BaseFormSet):
 
 #############################################################################################
 
-
-
 # FORM DEL PUNTO
 class PointForm(forms.ModelForm):
-
-        # id temporaneo, impostato dalla JApplet, server per poter costruire la 
-        # path corrispondente in modo corretto
-        temp_id = forms.IntegerField()
         
         # id del piano corrispondente
-        floor_id = forms.IntegerField()
-        
+       # piano = forms.IntegerField(widget=forms.HiddenInput())
         
         class Meta:
                 model = Point
                 
-                exclude = ('id_edificio')
+                exclude = ('building')
                 widgets = {
-                        'RFID' : HiddenInput(),
-                        'x' : HiddenInput(),
+                       # 'RFID' : HiddenInput(),
+                       # 'x' : HiddenInput(),
                         'y' : HiddenInput(),
-                        'ingresso' : HiddenInput(),  
-                        'temp_id' : HiddenInput(),
-                        'floor_id' : HiddenInput(),
+                       # 'ingresso' : HiddenInput(),
+                       # 'piano': HiddenInput()
                 } 
 
         
@@ -149,8 +142,8 @@ class PointForm(forms.ModelForm):
                         
                 x = self.cleaned_data['x']
                 y = self.cleaned_data['y']
-                temp_id = self.cleaned_data['temp_id']
-                floor_id = self.cleaned_data['floor_id']
+                temp_id = self.cleaned_data['id']
+                piano = self.cleaned_data['piano']
                 
                 floor = Floor.objects.get(pk=floor_id)
                 
@@ -169,8 +162,8 @@ class PointForm(forms.ModelForm):
                 return self
         
         def save(self, commit=True):
-                # do something with self.cleaned_data['temp_id']
                 super(PointForm).save(commit=commit)
+                
                 
 # POINT FORM SET                
 class PointFormSet(BaseFormSet):
@@ -182,6 +175,9 @@ class PointFormSet(BaseFormSet):
       
                 floors = {}
                 ids = []
+                rfid = []
+                
+                old_building = None
                 
                 for i in range(0, self.total_form_count()):
                         form = self.forms[i]
@@ -192,13 +188,28 @@ class PointFormSet(BaseFormSet):
                         x = form.cleaned_data.get('x')
                         y = form.cleaned_data.get('y')
                         
+                        RFID = form.cleaned_data.get('RFID')
+                        
+                        # verifico che tutti i piani appartengano allo stesso building
+                        if old_Building == None:
+                                old_Building = Floor.object.get(pk=f_id).building
+                        new_Building = Floor.object.get(pk=f_id).building
+                        
+                        if old_Building != new_Building:
+                                raise forms.ValidationError("Incorrect Floors!!!")
+                                
                         # verifico che non ci siano duplicazioni di id
                         if temp_id in ids:
                                 raise forms.ValidationError("Incorrect ids!!!")
                         
                         ids[len(ids)] = temp_id 
                         
-                        # verifico che non esistano marker con le stesse coordinate
+                        # verifico che non ci siano duplicazioni di RFID
+                        if RFID != None and RFID in rfid:
+                               raise forms.ValidationError("Duplicated RFID!!!") 
+                        rfid[len(rfdi)] = RFID
+                        
+                        # verifico che non esistano marker con le stesse coordinate 
                         # sullo stesso piano
                         if floors.has_key(f_id):
                                 lista = floors[f_id]
@@ -217,3 +228,72 @@ class PointFormSet(BaseFormSet):
  #################################################################################################     
           
           
+# FORM DEL PUNTO
+class PathForm(forms.ModelForm):
+
+        # faccio l'override per avere dei valori integer al posto degli oggetti piano
+        a = forms.IntegerField()
+        b = forms.IntegerField()
+        
+        class Meta:
+                model = Path
+                
+                exclude = ('building', 'id')
+                widgets = {
+                       # 'a' : HiddenInput(),
+                       # 'b' : HiddenInput(),
+                       # 'ascensore' : HiddenInput(),  
+                       # 'scala' : HiddenInput()
+                } 
+ 
+        
+        def clean(self):
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+      
+                a = self.cleaned_data['a']
+                b = self.cleaned_data['b']
+                
+                ascensore = self.cleaned_data['ascensore']
+                scala= self.cleaned_data['scala']
+                
+                # verifico che i punti siano differenti
+                if a == b:
+                        raise forms.ValidationError("Points not correct!!!")
+                
+                point_a = Point.objects.get(pk=a)
+                point_b = Point.objects.get(pk=b)
+                
+                # verifico che i punti a cui fa capo la path siano dello stesso edificio
+                if point_a.building != point_b.building :
+                        raise forms.ValidationError("Points not correct!!!")
+                      
+                # verifico che se la path e' un ascensore o una scala, i due punti non si trovino
+                # sullo stesso piano  
+                if (ascensore != None or scala != None) and (point_a.piano == point_b.piano):
+                        raise forms.ValidationError("Points not correct!!!")
+                        
+                return self
+        
+ #################################################################################################     
+     
+     
+# FORM DELLA STANZA
+class RoomForm(forms.ModelForm):
+        
+        # faccio l'override per avere un valore integer al posto dell'oggetto point
+        punto = forms.IntegerField()    
+                
+        class Meta:
+                model = Room
+                
+                exclude = ('building', 'id')
+                widgets = {
+                       # 'punto' : HiddenInput(),
+                       # 'nome_stanza' : HiddenInput(),
+                       # 'persone' : HiddenInput(),  
+                       # 'altro' : HiddenInput(),
+                       # 'link' : HiddenInput()
+                }   
+                

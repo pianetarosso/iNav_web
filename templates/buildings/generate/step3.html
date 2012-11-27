@@ -1,9 +1,12 @@
 
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js"></script>
 
+
         
 <script type="text/javascript">
 
+        var number_of_people = 1;
+        
         function initialize() {
         
                 try {
@@ -11,9 +14,195 @@
                 } catch (e) {
                         parent.location.reload(true);
                 }
+                
+                $(".app_input").hide();
+                
+        
+
+    $(".button").parent().find("input").prop('readonly', "readonly");
+    $(".button").click(function() {
+        var $button = $(this);
+        heigth = 26;
+        console.log("call!!!");
+        if (($button.text() == "+") && (number_of_people < 11)) {
+    	  var newform = document.createElement('input');
+                newform.id = "room_people_" + number_of_people;
+                newform.type = "text";
+                newform.maxlength = "100";
+                document.getElementById("room_peoples").appendChild(newform);
+                number_of_people++;
+                window.top.resizeIframe(heigth);
+    	  }
+    	else if (number_of_people > 1) {
+    	        var rform = document.getElementById("room_people_"+(number_of_people-1));
+                if (rform.value == "") {
+                        document.getElementById("room_peoples").removeChild(rform);
+                        number_of_people--;
+                        window.top.resizeIframe(-1 * heigth);
+                }
+    	}
+    });
+
+}
+
+function removePeople() {        
+        for (var i=1; i < number_of_people; i++) {
+                var rform = document.getElementById("room_people_"+i);
+                document.getElementById("room_peoples").removeChild(rform);
+                window.top.resizeIframe(-26);
         }
+        
+        number_of_people = 1;
+}
+    
+        var displayed_list = {};
+        function resize(name) {
+                    heigth = $("#"+name + "_input").height(); 
+                    
+                    if (displayed_list[name] == null)
+                        displayed_list[name] = false;
+                        
+                    if (displayed_list[name]) {
+                        $("#"+name + "_input").slideToggle();
+                        window.top.resizeIframe(-1 * heigth);
+                        displayed_list[name] = false;
+                        clearChildren(document.getElementById(name + "_input"));
+                    }
+                    else {
+                        window.top.resizeIframe(heigth);
+                        $("#"+name + "_input").slideToggle();
+                        displayed_list[name] = true;
+                    }
+        }
+        
+        checkBox = ['room', 'elevator', 'stair']
+        function disableCheckBoxs(value) {
+        
+                boolean = document.getElementById("marker_"+value).checked;
+
+                for(var i in checkBox) {
+                        if (checkBox[i] != value)
+                                document.getElementById("marker_"+checkBox[i]).disabled = boolean;
+                }
+        }
+        
+        // "Pulisco" i valori delle form
+        function clearChildren(element) {
+        
+                removePeople();
+                for (var i = 0; i < element.childNodes.length; i++) {
+                        var e = element.childNodes[i];
+                        
+                        if (e.tagName) switch (e.tagName.toLowerCase()) {
+                                case 'input':
+                                        switch (e.type) {
+                                               case "radio":
+                                               case "checkbox": if (e.checked) e.click(); break;
+                                               case "button":
+                                               case "submit":
+                                               case "image": break;
+                                                default: e.value = ''; break;
+                                        }
+                                        break;
+                                case 'select': e.selectedIndex = 0; enableNewId(e.name); break;
+                                case 'textarea': e.innerHTML = ''; break;
+                                default: clearChildren(e);
+                        }
+                }
+        }
+        
+       // nelle option, abilito o disabilito il campo "new_id" a seconda del valore selezionato
+       function enableNewId(value) {
+                test = document.getElementById(value+"_options").selectedIndex != 0;
+                document.getElementById(value+"_new_id").disabled = test;
+                if (test)
+                        document.getElementById(value+"_new_id").value = "";
+        }
+        
+     
 </script>
  
 <body onload="initialize()">
+
+
+<div id="marker_input" class="app_input"> 
+        <input type="checkbox" id="marker_RFID" onchange="resize('RFID')">RFID</input></br>
+        <div id=RFID_input class="app_input">
+                <input id="RFID_text" type="text" maxlength="200"/></br>
+        </div>
+
+        <input type="checkbox" name="marker_type" onclick="resize('room'); disableCheckBoxs('room');" id="marker_room" >Room</input><br>
+        
+        <div id="room_input" class="app_input" >
+                Name: <input id="room_name" type="text" maxlength="50"/></br>
+                Link: <input id="room_link" type="text" maxlength="100"/></br>
+                
+                <div id="room_peoples"style="display:inline;">
+                People: <input id="room_people_0" type="text" maxlength="100"/>
+                <span class="inc button" 
+                style="background: url({{STATIC_URL}}images/buttons.png) 
+                        no-repeat; 
+                        background-position: 0 -29px;
+                        float:right;
+                        width:29;
+                        height: 29;">-</span>
+                <span class="dec button"
+                style="background: url({{STATIC_URL}}images/buttons.png) 
+                        no-repeat;
+                        float:right;
+                        width:29;
+                        height:29;">+</span>
+                </div>
+                </br>
+                Notes: <input id="room_notes" type="text" maxlength="200"/></br>
+        </div>
+        
+        <input type="checkbox" name="marker_type" onclick="resize('elevator'); disableCheckBoxs('elevator');" id="marker_elevator" >Elevator</input><br>
+        
+        <div id="elevator_input"class="app_input">
+                <select id="elevator_options" name="elevator" onchange="enableNewId('elevator')">
+                        <option value="" selected="selected">Create a new ID</option>
+                        <option value="1">test</option>               
+                </select>
+                </br>
+                Create a new id: <input id="elevator_new_id" type="text" maxlength="50"/></br>
+        </div>
+        
+        
+        <input type="checkbox" name="marker_type" onclick="resize('stair'); disableCheckBoxs('stair');" id="marker_stair" >Stair</input><br>
+
+        <div id="stair_input" class="app_input">
+                <select id="stair_options" name ="stair" onchange="enableNewId('stair')">
+                        <option value="" selected="selected">Create a new ID</option>
+                        <option value="1">test</option>               
+                </select>
+                </br>
+                Create a new id: <input id="stair_new_id" type="text" maxlength="50"/></br>
+        </div>
+        
+        
+        
+        
+
+
+</div>
+
+{%for form in pointForm.forms %}
+
+{{form}}
+
+{% endfor %}
+<form enctype="multipart/form-data" action="{% url buildings.views.step new_id=building.pk %}" method="post">{% csrf_token %}
+<div id="pointForm"></div>
+<div id="pathForm"></div>
+<div id="roomForm"></div>
+        
+    <p><input type="submit" value="Next" onclick="resetHeight()"/></p>
+</form>
+
+<button onclick="resize('marker')">test</button>
+
+
+
 </body>
 

@@ -9,17 +9,6 @@
 var infoWindowListenerEnabled = false;
 
 
-
-
-// Funzione per il ridimensionamento automatico dell'altezza dell'IFRAME nella pagina di generazione di una nuova mappa
-
-function calcHeight() { 
-        //find the height of the internal page 
-        var the_height= document.getElementById('the_iframe').contentWindow. document.body.scrollHeight;  
-        //change the height of the iframe 
-        document.getElementById('the_iframe').height= the_height; 
-}
-
 // creazione dell'infobubble degli EDIFICI nell'INDEX + listener
 function create_infoBubble(myLatlng, nome, versione, link, foto, piani, creazione, update) {
         

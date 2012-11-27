@@ -3,6 +3,18 @@
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/style.css" />
 
+<script type="text/javascript">
+
+// Funzione per il ridimensionamento automatico dell'altezza dell'IFRAME nella pagina di generazione di una nuova mappa
+
+function calcHeight() { 
+        //find the height of the internal page 
+        var the_height= document.getElementById('the_iframe').contentWindow.document.body.scrollHeight;  
+        //change the height of the iframe 
+        document.getElementById('the_iframe').height= the_height; 
+}
+</script>
+
 <div id="Imports">
 <!-- Blocchi per importare i Javascript -->
 {% block imports %}
