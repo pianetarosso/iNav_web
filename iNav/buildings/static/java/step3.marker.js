@@ -27,7 +27,7 @@ function Marker(id, piano, x, y) {
          
         this.ascensore = "";
         this.scala = "";
-        this.ingresso = "";
+        this.ingresso = false;
         
         this.nome_stanza = "";
         this.persone = "";
@@ -36,13 +36,40 @@ function Marker(id, piano, x, y) {
         
 }
 
+// aggiorno le coordinate del marker
+function updateMarkerPosition(id, x, y) {
+        var m = markers[id];
+        m.x = x;
+        m.y = y;
+        markers[id] = m;
+}
+
+// funzione per editare un marker
+function editMarker(id) {
+
+        removeMarker(true);
+        
+        // copio il marker nella variabile temporanea, e lo elimino dalla lista
+        edit_marker = markers[id];
+        delete(markers[id]);
+        
+         // creo le options
+        setOptionsElevator(elevator_list, edit_marker.piano);
+        setOptionsStair(stair_list, edit_marker.piano);
+        
+        resize('marker');
+        
+        toEditButton();
+        
+        showMarkerData(edit_marker);
+}
 
 // funzione chiamata dalla JAPPLET al momento delle creazione di un marker, 
 // gli viene passato un id interno del marker, il piano e le coordinate del punto 
 function addMarker(id, x, y, piano) {
-
-        if (edit_marker != null) 
-                removeMarker();
+        
+        // elimino eventuali altri marker presenti in editing o creazione
+        removeMarker(true);
         
         new_marker = new Marker(id, piano, x, y, null);
         
@@ -50,40 +77,48 @@ function addMarker(id, x, y, piano) {
         setOptionsElevator(elevator_list, piano);
         setOptionsStair(stair_list, piano);
         
+        toSaveButton();
+        
         resize('marker');
 }
 
 // funzione per il salvataggio di un nuovo marker
-function saveNewMarker() {
+function saveMarker() {
 
-        new_marker.RFID = getRFID();
+        if (new_marker != null)
+                marker = marker;
+        else
+                marker = edit_marker;
+                
+        marker.RFID = getRFID();
         
         var room = getRoom();
-        new_marker.nome_stanza = room[0];
-        new_marker.link = room[1];
-        new_marker.persone = room[2];
-        new_marker.altro = room[3];
+        marker.nome_stanza = room[0];
+        marker.link = room[1];
+        marker.persone = room[2];
+        marker.altro = room[3];
         
-        new_marker.ascensore = getElevator();
-        new_marker.scala = getStair();
+        marker.ascensore = getElevator();
+        marker.scala = getStair();
         
-        //poniamo che i dati siano corretti grazie alle validazioni
-        
+         
         // salvo il marker nella lista
-        markers[new_marker.id] = new_marker;
+        markers[marker.id] = marker;
         
         // aggiorno la lista delle scale e degli ascensori
-        updateElevatorAndStairList(new_marker)
+        updateElevatorAndStairList(marker)
         
-        removeOptions(new_marker.piano);
+        removeOptions(marker.piano);
                
         // salvataggio in JApplet
-                
-        resize('marker');
         
-        console.log(marker);
-                console.log(stair_list);
-                console.log(elevator_list);
+        marker = null;
+        new_marker = null;
+        edit_marker = null;
+        
+        console.log(markers);
+        console.log(stair_list);
+        console.log(elevator_list);
 }
 
 // aggiorno le liste delle scale e degli ascensori
@@ -124,10 +159,15 @@ function updateElevatorAndStairList(marker) {
 // funzione per verificare che il valore di scala o ascensore immesso 
 // non sia già presente sullo stesso piano
 function testDuplicates(type, value) {
+        if (new_marker != null)
+                marker = new_marker;
+        else
+                marker = edit_marker;
+        
         if (type == "elevator_new_id") 
-                list = elevator_list[new_marker.piano];
+                list = elevator_list[marker.piano];
         if (type == "stair_new_id")
-                list = stair_list[new_marker.piano];
+                list = stair_list[marker.piano];
         if (list != null)
                 return (list.indexOf(value) >= 0);
         return false;
@@ -136,21 +176,37 @@ function testDuplicates(type, value) {
 
 // funzione per la rimozione dei parametri di un marker dalla form, 
 // a seconda che sia stato appena creato (cancellazione) o editato (dismiss delle modifiche)
-function removeMarker() {
+function removeMarker(value) {
 
         if (new_marker != null) {
-                removeMarkerParam(new_marker.piano);
-                 
-                 // eliminazione del marker sulla JAPPLET
-                 
-                new_marker = null;
+                if (value) {
+                        removeMarkerParam(new_marker.piano);
+                         // eliminazione del marker sulla JAPPLET
+                        new_marker = null;
+                        showQuestion(false);
+                }
+                else
+                        showQuestion(true);
         }
         
         if (edit_marker != null) {
                 markers[edit_marker.id] = edit_marker;
                 removeMarkerParam(edit_marker.piano);
                 edit_marker = null;
+                showQuestion(false);
         } 
+}
+
+var question_showed = false;
+function showQuestion(value) {
+        if (( value && !question_showed ) || ( !value && question_showed )) {
+                resize("buttons");
+                resize("question");
+                if (question_showed)
+                        question_showed = false;
+                else
+                        question_showed = true;
+        }
 }
 
 // rimuovo tutti i parametri del marker dalla form
@@ -168,6 +224,11 @@ function removeOptions(piano) {
         removeOptionsStair(stair_list, piano);
 }
 
+// funzione deputata all'eleiminazione di un marker
+function proceed() {
+
+
+}
 
 
 

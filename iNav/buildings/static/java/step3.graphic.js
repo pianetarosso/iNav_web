@@ -4,25 +4,34 @@
 // funzione per l'animazione alla comparsa/scomparsa delle varie liste
 // la variabile "displayed_list" viene riempita man mano
 var displayed_list = {};
+var busy = false;
 function resize(name_t) {
 
-        name = createInputId(name_t);
-        
-        heigth = $("#"+name).height(); 
-        
-        if (displayed_list[name] == null)
-                displayed_list[name] = false;
-
-        if (displayed_list[name]) {
-                $("#"+name).slideToggle();
-                window.top.resizeIframe(-1 * heigth);
-                displayed_list[name] = false;
-                clearChildren(document.getElementById(name));
-        }
+        if (busy)
+                setTimeout(function() {resize(name_t); },500);
         else {
-                window.top.resizeIframe(heigth);
-                $("#"+name).slideToggle();
-                displayed_list[name] = true;
+                busy = true;
+                
+                name = createInputId(name_t);
+                
+                heigth = $("#"+name).height(); 
+                
+                if (displayed_list[name] == null)
+                        displayed_list[name] = false;
+
+                if (displayed_list[name]) {
+                        $("#"+name).slideToggle();
+                        window.top.resizeIframe(-1 * heigth);
+                        displayed_list[name] = false;
+                        clearChildren(document.getElementById(name));
+                }
+                else {
+                        window.top.resizeIframe(heigth);
+                        $("#"+name).slideToggle();
+                        displayed_list[name] = true;
+                }
+                
+                setTimeout(function() {busy = false;},500);
         }
 }
         

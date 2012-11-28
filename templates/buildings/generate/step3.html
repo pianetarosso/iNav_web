@@ -27,6 +27,7 @@
                 // "nascondo" tutte le form al caricamento della pagina
                 $(".app_input").hide();
                 
+                resize('buttons');
                 var m = new Marker(1, 1, 1, 1);
                 m.RFID = "a";
                 m.ascensore = "A";
@@ -57,34 +58,64 @@
  
  
  
- 
- 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER IMPOSTARE UN MARKER NELLA FORM
+
+        // carico nella form i dati di un marker già presente
+        function showMarkerData(marker) {
         
-        
-        
-        
-      
-        
-        function setRFID(rfid) {
-                document.getElementById("marker_RFID").click();
-                document.getElementById("marker_text").value = rfid;
-        }
-        
-        function setRoom(room) {
-                document.getElementById("marker_room").click();
-                if (room.nome_stanza != null)
-                        document.getElementById("room_name").value = room.nome_stanza;
-                if (room.link != null)
-                        document.getElementById("room_link").value = room.link;
-                if (room.persone != null)
-                        document.getElementById("room_peoples").value = room.persone;
-                if (room.altro != null)
-                        document.getElementById("room_notes").value = room.altro;
-        }
-        
-        function setElevator(path) {
-                document.getElementById("marker_elevator").click();
+                console.log(marker);
+                // RFID
+                if (marker.RFID != "") {
+                        resize('RFID');
+                        document.getElementById(createCheckBoxId('RFID')).checked = true; 
+                        document.getElementById('RFID_text').value = marker.RFID;
+                }
                 
+                // INGRESSO
+                if (marker.ingresso) {
+                        document.getElementById(createCheckBoxId('access')).checked = marker.ingresso;
+                        disableCheckBoxes('access');
+                }
+                
+                // STANZA
+                else if (marker.nome_stanza != "") {
+                        resize('room');
+                        document.getElementById(createCheckBoxId('room')).checked = true;
+                        disableCheckBoxes('room');
+                        document.getElementById("room_name").value = marker.nome_stanza;
+                        document.getElementById("room_link").value = marker.link;
+                        document.getElementById("room_peoples").value = marker.persone;
+                        document.getElementById("room_notes").value = marker.altro;
+                }
+                
+                // ASCENSORE
+                else if (marker.ascensore != "") 
+                        setElevatorOrStair(marker.ascensore, 'elevator');
+                
+                // SCALA
+                else if (marker.scale != "")
+                        setElevatorOrStair(marker.scale, 'stair');
+                        
+                disableSaveButton(false);        
+        }
+ 
+        // imposto i valori del menu a tendina o del testo per gli ascensori o le scale
+        function setElevatorOrStair(value, type) {
+                resize(type);
+                document.getElementById(createCheckBoxId(type)).checked = true;  
+                disableCheckBoxes(type);
+                childs =  document.getElementById(createOptionId(type)).children;
+                var t = -1;
+                for(i=0; i < childs.length; i++) 
+                        if (childs.text == value) {
+                                t = i;
+                                break;
+                        }    
+                if (t > 0) 
+                        document.getElementById(createOptionId(type)).selectedIndex = t;
+                else
+                        document.getElementById(createOptionNewidId(type)).value = value;
         }
         
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,8 +214,28 @@
 
         // funzione per abilitare/disabilitare il pulsante di salvataggio       
         function disableSaveButton(value) {
-                document.getElementById("saveNewMarker").disabled = value;
-        }       
+                document.getElementById("saveMarker").disabled = value;
+        } 
+        
+        // funzione per convertire il salvataggio in Edit       
+        function toEditButton() {
+                disableSaveButton(false);
+                document.getElementById("saveMarker").text = "Edit";
+                hideDeleteButton(false);
+        }   
+        
+        // funzione per convertire il salvataggio in save
+        function toSaveButton() {
+                disableSaveButton(true);
+                document.getElementById("saveMarker").text = "Save";
+                hideDeleteButton(true);
+        }
+        
+        // funzione per mostrare o disabilitare il pulsante DELETE
+        function hideDeleteButton(value) {
+                document.getElementById("deleteMarker").disabled = value;
+                document.getElementById("deleteMarker").hidden = value;
+        }    
 
         // funzione per la costruzione dell'id dei campi input in base al valore passato
         function createInputId(name) {
@@ -260,10 +311,21 @@
         
         
 <!-- BUTTON SAVE AND CANCEL -->
-        <button id="saveNewMarker" onclick="saveNewMarker()" disabled="true">Save</button>
-        <button onclick="removeMarker()">Cancel</button>
+
+        <div id="buttons_input" class="app_input">
+                <button id="saveMarker" onclick="saveMarker()" disabled="true">Save</button>
+                <button onclick="removeMarker(false)">Cancel</button>
+                <button id="deleteMarker" onclick="showQuestion(true)" disabled="true" hidden ="true">Delete</button>
+        </div> 
         
-        
+
+<!-- BUTTON ARE YOU SURE..? -->
+
+        <div id="question_input" class="app_input">
+                Do you really want to lost your work?</br>
+                <button id="proceed" onclick="removeMarker(true)">Ok</button>
+                <button onclick="showQuestion(false)">Cancel</button>
+        </div>     
 
 
 </div>
@@ -282,7 +344,7 @@
 </form>
 
 <button onclick="addMarker(7, 1, 1, 1)">test</button>
-
+<button onclick="editMarker(1)">test1</button>
 
 
 </body>
