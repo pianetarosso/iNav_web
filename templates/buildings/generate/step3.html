@@ -9,6 +9,10 @@
         src="{{STATIC_URL}}java/step3.marker.js">
         </script>
         
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/step3.validation.js">
+        </script>
+        
 <script type="text/javascript">
 
         function initialize() {
@@ -22,6 +26,32 @@
                 
                 // "nascondo" tutte le form al caricamento della pagina
                 $(".app_input").hide();
+                
+                var m = new Marker(1, 1, 1, 1);
+                m.RFID = "a";
+                m.ascensore = "A";
+                
+                var m1 = new Marker(2, 1, 1, 1);
+                m1.RFID = "b";
+                m1.scale = "C";
+                
+                var m2 = new Marker(3, 3, 1, 1);
+                m2.ascensore = "A";
+                
+                var m3 = new Marker(4, 3, 1, 1);
+                m3.nome_stanza = "ggg";
+                m3.scala = "B";
+                
+                markers['1'] = m;
+                markers['2'] = m1;
+                markers['3'] = m2;
+                markers['4'] = m3;
+                updateElevatorAndStairList(m);
+                updateElevatorAndStairList(m1);
+                updateElevatorAndStairList(m2);
+                updateElevatorAndStairList(m3);
+                
+                
         }
   
  
@@ -30,29 +60,10 @@
  
  
         
-    /*    
         
         
-        function getData(marker) { 
-                var RFID;
-                if (document.getElementById("marker_RFID").checked) {
-                        var value = document.getElementById("marker_text").value;
-                        if (value == "")
-                                
-                
-                
-                }
-                
         
-        }
-        
-        function getRFID() {
-                if (document.getElementById("marker_RFID").checked) {
-                
-                
-                }
-                return        
-        }
+      
         
         function setRFID(rfid) {
                 document.getElementById("marker_RFID").click();
@@ -73,83 +84,100 @@
         
         function setElevator(path) {
                 document.getElementById("marker_elevator").click();
-        
+                
         }
- */       
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNZIONI PER LA VALIDAZIONE DEI CAMPI DI INPUT
+        
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER IMPOSTARE I VALORI DELLE OPTIONS DI ASCENSORI E SCALE
 
-        // dizionario per contenere i campi validi
-        var valid_input = {};
-        function validateFields(input) {
-                 var test = true;
-                if (input.name == "RFID") {
-                        for (var i in markers) 
-                                test = test && (input.value != markers[i].RFID);
-                }
-                        
-                if (input.name == "room") {
-                        for (var i in markers) 
-                                test = test && (input.value != markers[i].nome_stanza);
-                } 
+        function setOptions(list, exclude_floor, name, add) {
+                
+                if (add) {
+                        for(var l in list) {
+                                // non considero il piano da escludere
+                                if (l != exclude_floor) {
                                 
-                if ((!input.validity) || (input.value == "") || (!test)) {
-                        input.style.background = "red";
-                        valid_input[input.name] = false;
-                        console.log(valid_input);
+                                        array = list[l];  
+                                        for (a in array) {
+                                                var newoption = document.createElement('option');
+                                                newoption.value = array[a];
+                                                newoption.text = array[a];
+                                                document.getElementById(createOptionId(name)).appendChild(newoption);        
+                                        } 
+                                }
+                        }
                 }
                 else {
-                        input.style.background = "";
-                        valid_input[input.name] = true;
+                        child =  document.getElementById(createOptionId(name)).children;
+                        for (var i=1; i < child.length; i++)                            
+                                document.getElementById(createOptionId(name)).removeChild(child[i]);
                 }
-                
-                validateSaveButton();
-        }
-
-        // fa i test per abilitare o no il savebutton
-        function validateSaveButton() {
-                var test = false;
-                
-                for (var p in valid_input) 
-                        test = test || valid_input[p];
-                        
-                disableSaveButton(!test);
         }
         
-        // funzione chiamata quando viene eliminata una form
-        function removeValidation(value) {
-                delete(valid_input[value]);
-                validateSaveButton();
-        }
-
-        // nelle option, alla voce Ascensore o Scala,
-        // abilito o disabilito il campo "new_id" a seconda del valore selezionato
-        // nel menu a tendina (aggiunta validazione)
-        function enableNewId(value) {
-                test = document.getElementById(createOptionId(value)).selectedIndex != 0;
-                if (test) {
-                        document.getElementById(createOptionNewidId(value)).value = "";
-                        document.getElementById(createOptionNewidId(value)).style.background = "";
-                        valid_input[value] = true;
-                }
-                else
-                        valid_input[value] = false;
-                document.getElementById(createOptionNewidId(value)).disabled = test;
-                
-                validateSaveButton();
+        function setOptionsElevator(list, exclude_floor) {
+                setOptions(list, exclude_floor, 'elevator', true);
         }
         
-        // test di validazione per i campi immissione in Ascensore/Scala
-        function testIfText(input) {
-                if (input.value != "") 
-                        input.style.background = "";
-                else
-                        input.style.background = "red";
-                        
-                valid_input[value] = input.value != "";
-                validateSaveButton();
+        function setOptionsStair(list, exclude_floor) {
+                setOptions(list, exclude_floor, 'stair', true);
         }
- 
+        
+        function removeOptionsElevator(list, exclude_floor) {
+                setOptions(list, exclude_floor, 'elevator', false);
+        }
+        
+        function removeOptionsStair(list, exclude_floor) {
+                setOptions(list, exclude_floor, 'stair', false);
+        }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER ESTRARRE I DATI DAI CAMPI
+
+        function getRFID() {
+        
+                checkbox = document.getElementById(createCheckBoxId("RFID"));
+                text = document.getElementById(createInputId("RFID"));
+                if (checkbox.checked)
+                        return text.value;
+                return "";       
+        }
+        
+        function getRoom() {
+                checkbox = document.getElementById(createCheckBoxId("room"));
+                nome = document.getElementById("room_name");
+                link = document.getElementById("room_link");
+                persone = document.getElementById("room_peoples");
+                altro = document.getElementById("room_notes");
+                
+                if (checkbox.checked)
+                        return [nome.value, link.value, persone.value, altro.value]
+                return ["", "", "", ""]; 
+        }
+        
+        function getElevatorOrStair(value) {
+                checkbox = document.getElementById(createCheckBoxId(value));
+                option = document.getElementById(createOptionId(value)); 
+                text = document.getElementById(createOptionNewidId(value));
+                
+                if (checkbox.checked) {
+                        if (option.selectedIndex != 0)
+                                return text.value;
+                        else
+                                return option.value;
+                }
+                return "";
+        }
+        
+        function getElevator() {
+                return getElevatorOrStair("elevator");
+        }
+        
+        function getStair() {
+                return getElevatorOrStair("stair");
+        }
+       
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNZIONI PER ASTRARRE LA CREAZIONE DI ID HTML E L'ABILITAZIONE DEI PULSANTI DALLE ALTRE FUNZIONI
 
@@ -189,14 +217,15 @@
 <div id="marker_input" class="app_input"> 
 
 <!-- RFID -->
-        <input type="checkbox" id="marker_RFID" onchange="resize('RFID'); removeValidation('RFID')">RFID</input></br>
+        <input type="checkbox" id="marker_RFID" onchange="resize('RFID'); verify('RFID_text'); removeValidation(this, 'RFID')">RFID</input></br>
         <div id=RFID_input class="app_input">
                 <input id="RFID_text" type="text" name="RFID" maxlength="200" oninput="validateFields(this)"/></br>
         </div>
 
+        <input type="checkbox" name="access" onclick="disableCheckBoxes('access'); validateAccess(this); removeValidation(this, 'access')" id="marker_access" >Access</input><br>
 
 <!-- ROOM -->
-        <input type="checkbox" name="marker_type" onclick="resize('room'); disableCheckBoxes('room'); removeValidation('room')" id="marker_room" >Room</input><br>
+        <input type="checkbox" name="marker_type" onclick="resize('room'); disableCheckBoxes('room'); verify('room_name'); removeValidation(this, 'room');" id="marker_room" >Room</input><br>
         
         <div id="room_input" class="app_input" >
                 Name*: <input id="room_name" type="text" name ="room" maxlength="50" oninput="validateFields(this)"/></br>
@@ -207,34 +236,32 @@
        
 
 <!-- ELEVATOR -->
-        <input type="checkbox" name="marker_type" onclick="resize('elevator'); disableCheckBoxes('elevator'); removeValidation('elevator')"" id="marker_elevator" >Elevator</input><br>
+        <input type="checkbox" name="marker_type" onclick="resize('elevator'); disableCheckBoxes('elevator'); verify('elevator_new_id'); removeValidation(this, 'elevator');" id="marker_elevator" >Elevator</input><br>
         
         <div id="elevator_input"class="app_input">
                 <select id="elevator_options" name="elevator" onchange="enableNewId('elevator')">
-                        <option value="" selected="selected">Create a new ID</option>
-                        <option value="1">test</option>               
+                        <option value="" selected="selected">Create a new ID</option>          
                 </select>
                 </br>
-                Create a new id: <input id="elevator_new_id" type="text" maxlength="50" oninput="testIfText(this)"/></br>
+                Create a new id: <input id="elevator_new_id" type="text" maxlength="50" oninput="testIfText(this, 'elevator')"/></br>
         </div>
         
      
 <!-- STAIR -->  
-        <input type="checkbox" name="marker_type" onclick="resize('stair'); disableCheckBoxes('stair'); removeValidation('stair')"" id="marker_stair" >Stair</input><br>
+        <input type="checkbox" name="marker_type" onclick="resize('stair'); disableCheckBoxes('stair'); verify('stair_new_id'); removeValidation(this, 'stair');" id="marker_stair" >Stair</input><br>
 
         <div id="stair_input" class="app_input">
                 <select id="stair_options" name ="stair" onchange="enableNewId('stair')">
-                        <option value="" selected="selected">Create a new ID</option>
-                        <option value="1">test</option>               
+                        <option value="" selected="selected">Create a new ID</option>           
                 </select>
                 </br>
-                Create a new id: <input id="stair_new_id" type="text" maxlength="50" oninput="testIfText(this)"/></br>
+                Create a new id: <input id="stair_new_id" type="text" maxlength="50" oninput="testIfText(this, 'stair')"/></br>
         </div>
         
         
 <!-- BUTTON SAVE AND CANCEL -->
         <button id="saveNewMarker" onclick="saveNewMarker()" disabled="true">Save</button>
-        <button onclick="removeNewMarker()">Cancel</button>
+        <button onclick="removeMarker()">Cancel</button>
         
         
 
@@ -254,7 +281,7 @@
     <p><input type="submit" value="Next" onclick="resetHeight()"/></p>
 </form>
 
-<button onclick="resize('marker')">test</button>
+<button onclick="addMarker(7, 1, 1, 1)">test</button>
 
 
 
