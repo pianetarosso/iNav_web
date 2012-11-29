@@ -28,12 +28,12 @@ class BuildingForm(ModelForm):
                 if Building.objects.filter(geometria__intersects=data, pronto=True):
                         raise forms.ValidationError("You cannot draw over another Building!!!")
                         
-                #if data.area.sq_m > 500000: # m^2
-                #        raise forms.ValidationError("Your building is too big!!!")
+                if data.area.sq_m > 500000: # m^2
+                        raise forms.ValidationError("Your building is too big!!!")
                         
-                #for l in data.length:
-                #       if l.m > 1000: # m
-                #                raise forms.ValidationError("Your building is too big!!!")
+                for l in data.length:
+                       if l.m > 1000: # m
+                                raise forms.ValidationError("Your building is too big!!!")
                 return data
                 
         def clean_nome(self):

@@ -38,7 +38,7 @@ class Building(models.Model):
         
         # Geo Django:
         posizione = models.PointField(help_text="POINT(longitude latitude)", unique=True, srid=4326, null=True)
-        geometria = models.PolygonField(help_text="POLYGON((longitude latitude ..))", srid=4326, null=True)
+        geometria = models.PolygonField(help_text="POLYGON((longitude latitude ..))", srid=4326, null=True, geography=True)
 
         # Necessario per le geoquery
         objects = models.GeoManager()     

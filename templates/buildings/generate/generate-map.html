@@ -12,7 +12,39 @@
         return true;
  } 
  
+ // Funzione chiamata dalla japplet per la creazione di un nuovo marker
+ function createNewMarker(id, x, y, piano) {
+ console.log(id);
+        this.id = parseInt(id);
+        this.x = parseInt(x);
+        this.y = parseInt(y);
+        this.piano = parseInt(piano)
+        document.getElementById('the_iframe').contentWindow.addMarker(this.id, this.x, this.y, this.piano);
+ }
  
+  // funzione chiamata dall'iframe per eliminare un marker dall'applet
+  function deleteMarker(id, piano) {
+        mapGenerator.deleteMarker(id, piano);
+  }
+  
+  // funzione chiamata dalla JAPPLET per cancellare un marker
+  function deleteMarkerJS(id) {
+        
+  }
+  
+  // funzione chiamata dall'iframe per far sapere che il marker è stato salvato
+  function markerSaved() {
+       mapGenerator.markerSaved(); 
+  }
+  
+  // Funzione chiamata dalla japplet per l'editing di un marker
+  function editMarker(id) {
+        this.id = parseInt(id);
+        document.getElementById('the_iframe').contentWindow.editMarker(this.id);
+  }
+  
+  
+  
  
  function couples(name, value) {
         this.name = name;
@@ -114,6 +146,7 @@
  
  
  function getFloors() {
+
         var xmlHttp = null;
 
         xmlHttp = new XMLHttpRequest();
@@ -143,8 +176,8 @@
                 code="main.MapGenerator.class"
                 archive="{{STATIC_URL}}jar/MapGenerator.jar, 
                                 {{STATIC_URL}}jar/plugin.jar">
-                   <!--     <param name=id value="{{building.id}}"> -->
-                MAYSCRIPT
+                        <param name="MAYSCRIPT" value="true"> -->
+               
         </applet>
 
 

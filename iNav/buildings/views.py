@@ -434,7 +434,7 @@ def parseFloor(f):
                 'numero_di_piano' : f.numero_di_piano,
                 'bearing' : str(f.bearing),
                 'link' : f.immagine.url,
-              #  'id' : f.id
+                'id' : f.id
         } 
         return floor 
         
