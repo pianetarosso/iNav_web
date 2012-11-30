@@ -1,18 +1,24 @@
 
-<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js"></script>
+<script type="text/javascript" 
+        src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.1.min.js">
+</script>
 
 <script type="text/javascript"
         src="{{STATIC_URL}}java/step3.graphic.js">
-        </script>
+</script>
 
 <script type="text/javascript"
         src="{{STATIC_URL}}java/step3.marker.js">
-        </script>
+</script>
         
 <script type="text/javascript"
         src="{{STATIC_URL}}java/step3.validation.js">
-        </script>
+</script>
         
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/step3.pageInteraction.js">
+</script>
+
 <script type="text/javascript">
 
         function initialize() {
@@ -28,6 +34,8 @@
                 $(".app_input").hide();
                 
                 resize('buttons');
+                
+                /*
                 var m = new Marker(1, 1, 1, 1);
                 m.RFID = "a";
                 m.ascensore = "A";
@@ -51,212 +59,60 @@
                 updateElevatorAndStairList(m1);
                 updateElevatorAndStairList(m2);
                 updateElevatorAndStairList(m3);
-                
+                */
                 
         }
   
  
  
  
-//////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNZIONI PER IMPOSTARE UN MARKER NELLA FORM
 
-        // carico nella form i dati di un marker già presente
-        function showMarkerData(marker) {
-        
-                console.log(marker);
-                // RFID
-                if (marker.RFID != "") {
-                        resize('RFID');
-                        document.getElementById(createCheckBoxId('RFID')).checked = true; 
-                        document.getElementById('RFID_text').value = marker.RFID;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNZIONI PER IL CARICAMENTO DEL NUMERO DI PIANI NELLE OPTIONS E ABILITAZIONE DELLE STESSE:
+// (chiamate dalla JApplet)
+
+        // viene passato un array con i numeri di piano, il "selected" è sempre il primo
+        // costruisco il campo delle options dei piani
+        function addFloor(numero_piano) {
+                
+                var first = true;
+                for (n in numero_piano) {
+                        var newoption = document.createElement('option');
+                        newoption.value = numero_piano[n];
+                        newoption.text = numero_piano[n];
+                        if (first) 
+                                newoption.selected = "selected";      
+                        first = false;
+                        document.getElementById("floor_number").appendChild(newoption);        
                 }
+        
+        }
+
+        // abilita i campi delle options quando lo dice la JApplet
+        function enableInputOptions() {
+                document.getElementById("operation_type").disabled = false;
+                document.getElementById("floor_number").disabled = false;
+                document.getElementById("loading").hidden = true;
                 
-                // INGRESSO
-                if (marker.ingresso) {
-                        document.getElementById(createCheckBoxId('access')).checked = marker.ingresso;
-                        disableCheckBoxes('access');
-                }
-                
-                // STANZA
-                else if (marker.nome_stanza != "") {
-                        resize('room');
-                        document.getElementById(createCheckBoxId('room')).checked = true;
-                        disableCheckBoxes('room');
-                        document.getElementById("room_name").value = marker.nome_stanza;
-                        document.getElementById("room_link").value = marker.link;
-                        document.getElementById("room_peoples").value = marker.persone;
-                        document.getElementById("room_notes").value = marker.altro;
-                }
-                
-                // ASCENSORE
-                else if (marker.ascensore != "") 
-                        setElevatorOrStair(marker.ascensore, 'elevator');
-                
-                // SCALA
-                else if (marker.scale != "")
-                        setElevatorOrStair(marker.scale, 'stair');
-                        
-                disableSaveButton(false);        
-        }
- 
-        // imposto i valori del menu a tendina o del testo per gli ascensori o le scale
-        function setElevatorOrStair(value, type) {
-                resize(type);
-                document.getElementById(createCheckBoxId(type)).checked = true;  
-                disableCheckBoxes(type);
-                childs =  document.getElementById(createOptionId(type)).children;
-                var t = -1;
-                for(i=0; i < childs.length; i++) 
-                        if (childs.text == value) {
-                                t = i;
-                                break;
-                        }    
-                if (t > 0) 
-                        document.getElementById(createOptionId(type)).selectedIndex = t;
-                else
-                        document.getElementById(createOptionNewidId(type)).value = value;
+                resize('commands');
         }
         
-//////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNZIONI PER IMPOSTARE I VALORI DELLE OPTIONS DI ASCENSORI E SCALE
-
-        function setOptions(list, exclude_floor, name, add) {
-                
-                if (add) {
-                        for(var l in list) {
-                                // non considero il piano da escludere
-                                if (l != exclude_floor) {
-                                
-                                        array = list[l];  
-                                        for (a in array) {
-                                                var newoption = document.createElement('option');
-                                                newoption.value = array[a];
-                                                newoption.text = array[a];
-                                                document.getElementById(createOptionId(name)).appendChild(newoption);        
-                                        } 
-                                }
-                        }
-                }
-                else {
-                        child =  document.getElementById(createOptionId(name)).children;
-                        for (var i=1; i < child.length; i++)                            
-                                document.getElementById(createOptionId(name)).removeChild(child[i]);
-                }
+        // aggiorno la modalità di funzionamento (marker o path)
+        function updateOperationType(input) {
+                window.top.updateOperationType(input.value);
         }
         
-        function setOptionsElevator(list, exclude_floor) {
-                setOptions(list, exclude_floor, 'elevator', true);
-        }
-        
-        function setOptionsStair(list, exclude_floor) {
-                setOptions(list, exclude_floor, 'stair', true);
-        }
-        
-        function removeOptionsElevator(list, exclude_floor) {
-                setOptions(list, exclude_floor, 'elevator', false);
-        }
-        
-        function removeOptionsStair(list, exclude_floor) {
-                setOptions(list, exclude_floor, 'stair', false);
+        // aggiorno il piano selezionato
+        function updateFloor(input) {
+                window.top.updateFloor(parseInt(input.value));
         }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNZIONI PER ESTRARRE I DATI DAI CAMPI
-
-        function getRFID() {
-        
-                checkbox = document.getElementById(createCheckBoxId("RFID"));
-                text = document.getElementById(createInputId("RFID"));
-                if (checkbox.checked)
-                        return text.value;
-                return "";       
-        }
-        
-        function getRoom() {
-                checkbox = document.getElementById(createCheckBoxId("room"));
-                nome = document.getElementById("room_name");
-                link = document.getElementById("room_link");
-                persone = document.getElementById("room_peoples");
-                altro = document.getElementById("room_notes");
-                
-                if (checkbox.checked)
-                        return [nome.value, link.value, persone.value, altro.value]
-                return ["", "", "", ""]; 
-        }
-        
-        function getElevatorOrStair(value) {
-                checkbox = document.getElementById(createCheckBoxId(value));
-                option = document.getElementById(createOptionId(value)); 
-                text = document.getElementById(createOptionNewidId(value));
-                
-                if (checkbox.checked) {
-                        if (option.selectedIndex != 0)
-                                return text.value;
-                        else
-                                return option.value;
-                }
-                return "";
-        }
-        
-        function getElevator() {
-                return getElevatorOrStair("elevator");
-        }
-        
-        function getStair() {
-                return getElevatorOrStair("stair");
-        }
-       
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNZIONI PER ASTRARRE LA CREAZIONE DI ID HTML E L'ABILITAZIONE DEI PULSANTI DALLE ALTRE FUNZIONI
-
-        // funzione per abilitare/disabilitare il pulsante di salvataggio       
-        function disableSaveButton(value) {
-                document.getElementById("saveMarker").disabled = value;
-        } 
-        
-        // funzione per convertire il salvataggio in Edit       
-        function toEditButton() {
-                disableSaveButton(false);
-                document.getElementById("saveMarker").text = "Edit";
-                hideDeleteButton(false);
-        }   
-        
-        // funzione per convertire il salvataggio in save
-        function toSaveButton() {
-                disableSaveButton(true);
-                document.getElementById("saveMarker").text = "Save";
-                hideDeleteButton(true);
-        }
-        
-        // funzione per mostrare o disabilitare il pulsante DELETE
-        function hideDeleteButton(value) {
-                document.getElementById("deleteMarker").disabled = value;
-                document.getElementById("deleteMarker").hidden = value;
-        }    
-
-        // funzione per la costruzione dell'id dei campi input in base al valore passato
-        function createInputId(name) {
-                return name + "_input";
+        // comunico alla JApplet che ho concluso le operazioni
+        function operationComplete(saved, id, type) {
+                window.top.operationComplete(saved, id, type);
         }
 
-        // funzione per la costruzione dell'id dei checkBox in base al valore passato
-        function createCheckBoxId(name) {
-                return "marker_" + name;
-        }
-
-        // funzione per la costruzione dell'id delle Options in base al valore passato
-        function createOptionId(name) {
-                return name + "_options";
-        }
-
-        // funzione per la costruzione dell'id dei campi testo delle Options in base al valore passato
-        function createOptionNewidId(name) {
-                return name + "_new_id";
-        }
- 
+        
 //////////////////////////////////////////////////////////////////////////////////////////////   
 
 
@@ -264,6 +120,22 @@
  
 <body onload="initialize()">
 
+<div id="loading">
+        Loading the applet and images...
+</div>
+<div id="commands_input" class="app_input">
+        Select which object add:
+        <select id="operation_type" onchange="updateOperationType(this)" disabled="true"  name="commands">
+                <option value="none" selected="selected">None</option>
+                <option value="marker">Marker</option>
+                <option value="path" >Path</option>          
+        </select>
+        </br>
+        Select on which floor:
+        <select id="floor_number" onchange="updateFloor(this)" disabled="true"  name="commands">      
+        </select>
+        
+</div>
 
 <div id="marker_input" class="app_input"> 
 

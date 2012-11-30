@@ -4,7 +4,7 @@
         // dizionario per contenere i campi validi
         var valid_input = {};
         function validateFields(input) {
-                 var test = true;
+                var test = true;
                 if (input.name == "RFID") {
                         for (var i in markers) 
                                 test = test && (input.value != markers[i].RFID);
@@ -37,7 +37,6 @@
                         counter++
                 }
                 test = test && (counter > 0);
-                
                 disableSaveButton(!test);
         }
         
@@ -58,6 +57,7 @@
         // abilito o disabilito il campo "new_id" a seconda del valore selezionato
         // nel menu a tendina (aggiunta validazione)
         function enableNewId(value) {
+                
                 test = document.getElementById(createOptionId(value)).selectedIndex != 0;
                 if (test) {
                         document.getElementById(createOptionNewidId(value)).value = "";

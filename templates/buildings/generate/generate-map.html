@@ -6,43 +6,103 @@
         
 <script type="text/javascript">
 
- var counter = {};
+        var counter = {};
  
- function stopRefresh() {
-        return true;
- } 
+ // FUNZIONI STANDARD DELLA PAGINA /////////////////////////////////////////////////
  
- // Funzione chiamata dalla japplet per la creazione di un nuovo marker
- function createNewMarker(id, x, y, piano) {
- console.log(id);
-        this.id = parseInt(id);
-        this.x = parseInt(x);
-        this.y = parseInt(y);
-        this.piano = parseInt(piano)
-        document.getElementById('the_iframe').contentWindow.addMarker(this.id, this.x, this.y, this.piano);
- }
+        // comunica all'iframe di fermare il refresh
+        function stopRefresh() {
+               return true;
+        } 
  
-  // funzione chiamata dall'iframe per eliminare un marker dall'applet
-  function deleteMarker(id, piano) {
-        mapGenerator.deleteMarker(id, piano);
-  }
-  
-  // funzione chiamata dalla JAPPLET per cancellare un marker
-  function deleteMarkerJS(id) {
+        // questa funzione ridimensiona l'iFrame in base agli elementi mostrati
+        function resizeIframe(value) {
+                var new_heigth = $("#the_iframe").contents().find("body").outerHeight(true) + value;
+         
+                $("#the_iframe").animate(
+                        {height: $("#the_iframe").contents().find("body").outerHeight(true) + value},
+                                "slow","swing"
+                );
+        }
+ ////////////////////////////////////////////////////////////////////////////////////
+ 
+ 
+ // FUNZIONI PER L'INTERAZIONE CON LA JAPPLET /////////////////////////////////////
+ 
+        // Creazione di un nuovo marker
+        function createNewMarker(id, x, y, piano) {
+ 
+                this.id = parseInt(id);
+                this.x = parseInt(x);
+                this.y = parseInt(y);
+                this.piano = parseInt(piano)
+                document.getElementById('the_iframe').contentWindow.addMarker(this.id, this.x, this.y, this.piano);
+        }
+ 
+
+        // aggiorno la modalità di funzionamento (marker o path)
+        function updateOperationType(input) {
+                mapGenerator.setOperation(input);
+        }
         
-  }
+        // aggiorno il piano selezionato
+        function updateFloor(input) {
+                mapGenerator.setFloor(input);
+        }
+        
+        // abilito gli input per i marker e i piani
+        function enableInputs() {
+                document.getElementById('the_iframe').contentWindow.enableInputOptions();
+        }
+ 
+        // COMUNICO ALLA JAPPLET CHE HO CONCLUSO LE OPERAZIONI
+        function operationComplete(saved, id, type) {
+                mapGenerator.operationComplete(saved, id, type);
+        }
+        
+        // Funzione chiamata dalla japplet per l'editing di un marker
+        function editMarker(id) {
+                document.getElementById('the_iframe').contentWindow.editMarker(parseInt(id));
+        }
+ 
+
+        // funzione per caricare i piani nelle options dell'iframe
+        function sendFloorsToIframe(json) {
+                var floors = [];
+                
+                for (var j in json) 
+                        floors[floors.length] = parseInt(json[j].numero_di_piano);
+                try {
+                        document.getElementById('the_iframe').contentWindow.addFloor(floors);
+                } catch (err) {
+                        setTimeout(function() {sendFloorsToIframe(json); },500);
+                }
+        }
+ 
+        // funzione per recuperare i piani tramite chiamata ad una pagina e passarli alla JApplet
+        function getFloors() {
+
+                var xmlHttp = null;
+
+                xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
+                xmlHttp.send(null);
+                var json = JSON.parse(xmlHttp.responseText);
+                
+                // invio i piani anche all'iframe per costuire le options di input
+                sendFloorsToIframe(json);
+                
+                return json;
+        }
+ 
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
   
-  // funzione chiamata dall'iframe per far sapere che il marker è stato salvato
-  function markerSaved() {
-       mapGenerator.markerSaved(); 
-  }
   
-  // Funzione chiamata dalla japplet per l'editing di un marker
-  function editMarker(id) {
-        this.id = parseInt(id);
-        document.getElementById('the_iframe').contentWindow.editMarker(this.id);
-  }
   
+  
+  
+       
   
   
  
@@ -143,48 +203,19 @@
         return JSON.parse(addInput(p));
  }
  
- 
- 
- function getFloors() {
-
-        var xmlHttp = null;
-
-        xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
-        xmlHttp.send( null );
-        console.log(xmlHttp.responseText);
-        return JSON.parse(xmlHttp.responseText);
-        
- }
- 
- // questa funzione ridimensiona l'iFrame in base agli elementi mostrati
- function resizeIframe(value) {
-         var new_heigth = $("#the_iframe").contents().find("body").outerHeight(true) + value;
-         
-        $("#the_iframe").animate(
-            {height: $("#the_iframe").contents().find("body").outerHeight(true) + value},
-            "slow",
-            "swing"
-        );
- }
- 
- 
-        </script>
-
-        <applet name="mapGenerator"
-                id="mapGenerator"  
-                code="main.MapGenerator.class"
-                archive="{{STATIC_URL}}jar/MapGenerator.jar, 
-                                {{STATIC_URL}}jar/plugin.jar">
-                        <param name="MAYSCRIPT" value="true"> -->
-               
-        </applet>
+</script>
 
 
-        
- 
-        
-        
+<applet name="mapGenerator"
+        id="mapGenerator"  
+        code="main.MapGenerator.class"
+        archive="
+                {{STATIC_URL}}jar/MapGenerator.jar, 
+                {{STATIC_URL}}jar/plugin.jar
+        ">
+        <param name="MAYSCRIPT" value="true">             
+</applet>
+  
 <br>
 
 <button onClick="test()"> test</button>

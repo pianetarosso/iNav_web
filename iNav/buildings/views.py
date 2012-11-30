@@ -103,14 +103,14 @@ def generate(request, new_id):
                 # se non e' stato impostato il bearing ci troviamo nel 3o step (JApplet)
                 elif test_bearing:
                         session['building'] = building
-                        floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), building=b_id)
-                        data = []
+                       # floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), building=b_id)
+                        #data = []
                         
                         # costruisco un JSON con alcuni dati dei piani
-                        for f in floors:
-                                data.append(parseFloor(f))
-                        session['floors'] = simplejson.dumps(data)
-                        
+                        #for f in floors:
+                        #        data.append(parseFloor(f))
+                        #session['floors'] = simplejson.dumps(data)
+                       
                         return render_to_response('buildings/generate/generate-map.html', session, context_instance = RequestContext(request))
                      
                 # verifico il nome dell'edificio, se e' lo stesso del momento della costruzione

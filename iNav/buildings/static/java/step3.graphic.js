@@ -82,8 +82,10 @@ function clearChildren(element) {
                                         break;
                                         
                                 case 'select': 
-                                        e.selectedIndex = 0; 
-                                        enableNewId(e.name); 
+                                        if (e.name != "commands") {
+                                                e.selectedIndex = 0; 
+                                                enableNewId(e.name);
+                                        } 
                                         break;
                                         
                                 case 'textarea': 
