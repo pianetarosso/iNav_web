@@ -6,7 +6,7 @@
         function validateFields(input) {
                 var test = true;
                 if (input.name == "RFID") {
-                        for (var i in markers) 
+                        for (var i in markers)
                                 test = test && (input.value != markers[i].RFID);
                 } 
                         

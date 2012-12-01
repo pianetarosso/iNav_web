@@ -1,0 +1,54 @@
+
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/style.css" />
+<script type="text/javascript" src="{{STATIC_URL}}java/jquery-1.8.2.js"> </script>
+
+
+{% block functions %}
+<script type="text/javascript">
+
+var testSetMapPosition = true;
+var bounds;
+var map;
+
+
+   
+function initialize() {
+        
+       if (window.top.getReady() && ({{step}} == 1)) 
+                window.top.setDisegnato(true); 
+        
+        if (window.top.getDisegnato()) 
+        
+                // blocco la possibilità di disegnare altri edifici e "centro" il building sulla mappa
+                window.top.setUserPolygonReady();
+        
+        try {
+                load_images();
+        } catch(e) {}
+        
+        window.top.calcHeight();
+}     
+
+function setBounds(bounds) {
+        this.bounds = bounds;
+}
+
+function setMap(map) {
+        this.map = map;
+}
+
+
+function resetHeight() {
+        window.top.setHeight(0);
+}
+
+</script>  
+
+<body onload="initialize()">      
+{% endblock functions %}
+
+
+
+{% block body %}
+{% endblock body %}
+</body>

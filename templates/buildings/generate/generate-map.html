@@ -64,6 +64,10 @@
         function editMarker(id) {
                 document.getElementById('the_iframe').contentWindow.editMarker(parseInt(id));
         }
+        
+        function updatePosition(id, x, y) {
+                document.getElementById('the_iframe').contentWindow.updatePosition(parseInt(id), parseInt(x), parseInt(y));
+        } 
  
 
         // funzione per caricare i piani nelle options dell'iframe
@@ -88,7 +92,7 @@
                 xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
                 xmlHttp.send(null);
                 var json = JSON.parse(xmlHttp.responseText);
-                
+                console.log(json);
                 // invio i piani anche all'iframe per costuire le options di input
                 sendFloorsToIframe(json);
                 

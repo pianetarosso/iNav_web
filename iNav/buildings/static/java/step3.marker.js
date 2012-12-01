@@ -109,7 +109,7 @@ function saveMarker() {
          
         // salvo il marker nella lista
         markers[marker.id] = marker;
-        
+        console.log(markers);
         // aggiorno la lista delle scale e degli ascensori
         updateElevatorAndStairList(marker)
         
@@ -259,10 +259,13 @@ function removeOptions(piano) {
         removeOptionsStair(stair_list, piano);
 }
 
-// funzione deputata all'eleiminazione di un marker
-function proceed() {
-
-
+// funzione deputata all'aggiornamento della posizione di un marker
+function updatePosition(id, x, y) {
+        marker = markers[id];
+        marker.x = x;
+        marker.y = y;
+        markers[id] = marker;
+        console.log(marker);
 }
 
 
