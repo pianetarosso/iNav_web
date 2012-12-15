@@ -106,6 +106,7 @@ function saveMarker() {
         marker.ascensore = getElevator();
         marker.scala = getStair();
         
+        marker.ingresso = getAccess();
          
         // salvo il marker nella lista
         markers[marker.id] = marker;
@@ -115,10 +116,16 @@ function saveMarker() {
         
         removeOptions(marker.piano);
                
+        test = marker.ingresso;
+        test = test || (marker.ascensore != "");
+        test = test || (marker.scala != "");
+        
         // abilitazione al movimento della JAPPLET
         // primo valore: "SALVATO?"
         // secondo valore: ID
-        operationComplete(true, marker.id, "marker");
+        // terzo valore: tipo (marker/path)
+        // quarto valore: booleano che indica se è un ingresso/ascensore/scala
+        operationComplete(true, marker.id, "marker", test);
         
         new_marker = null;
         edit_marker = null;
@@ -201,7 +208,7 @@ function removeMarker(value) {
                         removeMarkerParam(new_marker.piano);
                         
                          // eliminazione del marker sulla JAPPLET
-                         operationComplete(false, new_marker.id, "marker");
+                         operationComplete(false, new_marker.id, "marker", false);
                         new_marker = null;
                         showQuestion(false);
                         resize('marker');
@@ -215,7 +222,7 @@ function removeMarker(value) {
                 if (value) {
                         markers[edit_marker.id] = edit_marker;
                         removeMarkerParam(edit_marker.piano);
-                        operationComplete(false, edit_marker.id, "marker");
+                        operationComplete(false, edit_marker.id, "marker", false);
                         edit_marker = null;
                         showQuestion(false);
                         resize('marker');
@@ -223,7 +230,7 @@ function removeMarker(value) {
                 }
                 else {
                         removeMarkerParam(edit_marker.piano);
-                        operationComplete(false, edit_marker.id, "marker");   
+                        operationComplete(false, edit_marker.id, "marker", false);   
                         edit_marker = null;
                         resize('marker');
                         resize('commands');

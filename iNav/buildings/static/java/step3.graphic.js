@@ -11,10 +11,13 @@ function resize(name_t) {
                 setTimeout(function() {resize(name_t); },500);
         else {
                 busy = true;
-                
+               
                 name = createInputId(name_t);
                 
                 heigth = $("#"+name).height(); 
+                console.log(heigth);
+                console.log(name);
+                console.log($("#"+name));
                 
                 if (displayed_list[name] == null)
                         displayed_list[name] = false;
@@ -26,6 +29,7 @@ function resize(name_t) {
                         clearChildren(document.getElementById(name));
                 }
                 else {
+                        console.log(displayed_list);
                         window.top.resizeIframe(heigth);
                         $("#"+name).slideToggle();
                         displayed_list[name] = true;

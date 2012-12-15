@@ -19,6 +19,10 @@
         src="{{STATIC_URL}}java/step3.pageInteraction.js">
 </script>
 
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/step3.next.js">
+</script>
+
 <script type="text/javascript">
 
         function initialize() {
@@ -108,11 +112,32 @@
         }
 
         // comunico alla JApplet che ho concluso le operazioni
-        function operationComplete(saved, id, type) {
-                window.top.operationComplete(saved, id, type);
+        // access => comunica alla JAPPLET che il marker è un ingresso, un ascensore o una scala
+        function operationComplete(saved, id, type, access) {
+                window.top.operationComplete(saved, id, type, access);
+        }
+        
+        // propongo la cancellazione della path
+        function deletePath() {
+                resize('commands');
+                resize('path');
         }
 
+        // cancello la path
+        function pathDeleted(value) {
+                resize('path');
+                window.top.operationComplete(value, 0, "path", false);
+                resize('commands');
+        }
         
+        var oldValue = 0;
+        // abilito il pulsante "next"
+        function enableNext(value) {
+                if (oldValue != value) {
+                        resize('next');
+                        oldValue = value;
+                }
+        }
 //////////////////////////////////////////////////////////////////////////////////////////////   
 
 
@@ -130,12 +155,14 @@
                 <option value="marker">Marker</option>
                 <option value="path" >Path</option>          
         </select>
-        </br>
+        </br></br>
         Select on which floor:
         <select id="floor_number" onchange="updateFloor(this)" disabled="true"  name="commands">      
         </select>
         
+        
 </div>
+
 
 <div id="marker_input" class="app_input"> 
 
@@ -153,7 +180,7 @@
         <div id="room_input" class="app_input" >
                 Name*: <input id="room_name" type="text" name ="room" maxlength="50" oninput="validateFields(this)"/></br>
                 Link: <input id="room_link" type="text" maxlength="100"/></br>
-                People: <input id="room_people" type="text" maxlength="200"/>                
+                People: <input id="room_people" type="text" maxlength="200"/></br>                
                 Notes: <input id="room_notes" type="text" maxlength="200"/></br>
         </div>
        
@@ -198,26 +225,28 @@
                 <button id="proceed" onclick="removeMarker(true)">Ok</button>
                 <button onclick="showQuestion(false)">Cancel</button>
         </div>     
-
-
 </div>
 
-{%for form in pointForm.forms %}
-
-{{form}}
-
-{% endfor %}
-<form enctype="multipart/form-data" action="{% url buildings.views.step new_id=building.pk %}" method="post">{% csrf_token %}
-<div id="pointForm"></div>
-<div id="pathForm"></div>
-<div id="roomForm"></div>
+ <div id="path_input" class="app_input">
+        Do you really want to delete this path?</br>
+        <button onclick="pathDeleted(false)">Ok</button>
+        <button onclick="pathDeleted(true)">Cancel</button>
+</div> 
         
-    <p><input type="submit" value="Next" onclick="resetHeight()"/></p>
+        
+<div id="next_input" class="app_input">
+        </br></br>
+        <button onclick="nextStep()">Next</button>
+</div> 
+
+
+<form enctype="multipart/form-data" action="{% url buildings.views.step new_id=building.pk %}" method="post" id="myform">{% csrf_token %}
+
+    <p><input type=submit" class="app_input" value="Next" onclick="resetHeight()"/></p>
 </form>
 
-<button onclick="addMarker(7, 1, 1, 1)">test</button>
-<button onclick="editMarker(1)">test1</button>
-
-
+<!--
+{{pointForm}}
+-->
 </body>
 

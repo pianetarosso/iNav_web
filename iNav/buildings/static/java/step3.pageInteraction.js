@@ -129,6 +129,11 @@ function getRoom() {
         return ["", "", "", ""]; 
 }
         
+function getAccess() {
+        var access = document.getElementById(createCheckBoxId('access')).checked;
+        return access;
+}
+
 function getElevatorOrStair(value) {
         checkbox = document.getElementById(createCheckBoxId(value));
         option = document.getElementById(createOptionId(value)); 

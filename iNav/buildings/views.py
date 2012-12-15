@@ -220,7 +220,7 @@ def step(request, new_id):
                                 session['formset'] = form     
                 else:
                         form = FloorFormSet()
-                        print form
+                
                         session['formset'] = form 
     
     
@@ -274,73 +274,74 @@ def step(request, new_id):
    #    Creazione dei punti e percorsi dei piani in base ai dati forniti in precedenza
    #    Salvataggio di TUTTO
         if step == 3:
-     
                 
                 PointFSet = formset_factory(PointForm, formset=PointFormSet)
                 PathFormSet = formset_factory(PathForm)
                 RoomFormSet = formset_factory(RoomForm)
                 
                 if request.method == 'POST':
-                
-                       
+                        
                         
                         point_formset = PointFSet(request.POST, prefix='points')
                         path_formset = PathFormSet(request.POST, prefix='paths')
                         room_formset = RoomFormSet(request.POST, prefix='rooms')
                         
-                        if point_formset.is_valid() and path_formset.is_valid() and room_formset.is_valid():
-                         
-                                floors = Floor.objects.filter(building=b.id).order_by('numero_di_piano')
+                        if not (point_formset.is_valid() and path_formset.is_valid()):
+                              raise Http404
+                              
+                          
+                        # salvo i punti nel db, e nel contempo creo un dizionario con il punto
+                        # e l'id usato all'interno della pagina
+                        points = {}
+                        for form in point_formset.forms:
+                                temp_id = form.cleaned_data['temp_id']
+                                temp_floor = form.cleaned_data['temp_piano']
+                                floor = get_object_or_404(Floor, building=b, numero_di_piano=temp_floor)
                                 
-                                # costruisco il dizionario dei punti, salvandoli nel db
-                                # {'temp_id' : point}      
-                                points = {}
-                                for form in point_formset.forms:
-                                         
-                                        piano = form.cleaned_data['piano']
+                                point = form.save(commit=False)
+                                
+                                # verifico che i punti x e y siano all'interno dell'immagine
+                                image = Image.open(floor.immagine)
+                                if point.x < 0 or point.x > image.size[0] or point.y < 0 or point.y > image.size[1]:
+                                        raise Http404 
                                         
-                                        point = form.save(commit=False)
+                                point.piano = floor
+                                point.building = b
+                                point.save()
+                                
+                                points[temp_id] = point
+        
+                        for form in path_formset.forms:
+                                temp_a = form.cleaned_data['temp_a']
+                                temp_b = form.cleaned_data['temp_b']
+                                
+                                path = form.save(commit=False)
+                                path.building = b
+                                
+                                if not (points.has_key(temp_a) and points.has_key(temp_b)):
+                                        raise Http404
                                         
-                                        for floor in floors:
-                                                if floor.pk == floor_id:
-                                                       point.piano = floor.id
-                                                       break
-                                                       
-                                        point.building = b.id
-                                        temp_id = point.id
-                                        point.id = None
-                                        points[point.id] = point.save()
-                                         
-                                # salvo le paths
-                                for form in path_formset.forms:
-                                        path = form.save(commit=False)
-                                        
-                                        path.a = points[path.a]
-                                        path.b = points[path.b]
-                                        
-                                        path.building = b.id
-                                        
-                                        path.save()    
-                                                     
-                                # salvo le rooms
+                                path.a = points[temp_a]
+                                path.b = points[temp_b]
+                                
+                                path.save()
+                                
+                                
+                        if room_formset.is_valid():
+                        
                                 for form in room_formset.forms:
+                                        temp_punto = form.cleaned_data['punto']
+                                        
                                         room = form.save(commit=False)
+                                        room.building = b
+                                        room.punto = points[temp_punto]
                                         
-                                        room.punto = points[room.punto]
-                                        room.building = b.id
-                                        
-                                        room.save()     
-                                
-       
-                        else:
-                                session['pointForm'] = point_formset    
-                                session['pathForm'] = path_formset  
-                                session['roomForm'] = room_formset
-                
-                else:
-                        session['pointForm'] = PointFSet(prefix='points')     
-                        session['pathForm'] = PathFormSet(prefix='paths')  
-                        session['roomForm'] = RoomFormSet(prefix='rooms')
+                                        room.save()
+                        
+                       
+                       
+                #else:
+                 #       session['pointForm'] = PointFSet()    
         
         
         #print str(request.session.items())
@@ -357,8 +358,10 @@ def step(request, new_id):
    
 
    
-############################################################################################
-   
+############################################################################################        
+
+
+
 ############################################################################################
 ## RESTITUZIONE DEI DATI TRAMITE JSON PER JAPPLET O ANDROID
    

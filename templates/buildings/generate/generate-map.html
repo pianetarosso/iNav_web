@@ -42,6 +42,7 @@
 
         // aggiorno la modalità di funzionamento (marker o path)
         function updateOperationType(input) {
+                console.log(input);
                 mapGenerator.setOperation(input);
         }
         
@@ -56,8 +57,8 @@
         }
  
         // COMUNICO ALLA JAPPLET CHE HO CONCLUSO LE OPERAZIONI
-        function operationComplete(saved, id, type) {
-                mapGenerator.operationComplete(saved, id, type);
+        function operationComplete(saved, id, type, access) {
+                mapGenerator.operationComplete(saved, id, type, access);
         }
         
         // Funzione chiamata dalla japplet per l'editing di un marker
@@ -68,8 +69,61 @@
         function updatePosition(id, x, y) {
                 document.getElementById('the_iframe').contentWindow.updatePosition(parseInt(id), parseInt(x), parseInt(y));
         } 
+        
+        // chiamata al momento della selezione di una path per proporre la sua cancellazione
+        function deletePath() {
+                document.getElementById('the_iframe').contentWindow.deletePath();
+        }
  
+        // funzione che viene chiamata ogni volta che è effettuata una validazione, per abilitare 
+        // o disabilitare il pulsante "next"
+        // 1 => abilita
+        // 0 => disabilita
+        function isValid(value) {
+                document.getElementById('the_iframe').contentWindow.enableNext(parseInt(value));
+        }
+        
+        
+        // funzione per il recupero delle path e il parsing dell'output dell'Applet
+        // #numero_di_piano;P.marker.id,P.x,P.y,A.marker.id,A.x,A.y; ... ## ... # ..
+        function getPaths() {
+                var temp_paths = mapGenerator.getPaths();
+                var out = {};
 
+                // divido i vari gruppi di array
+                var array_list = temp_paths.split("#");
+              
+                for (var al in array_list) {
+                
+                        if (array_list[al].length > 0) {
+                                
+                                // separo i singoli oggetti
+                                var objects = array_list[al].split(";");
+                                
+                                var numero_di_piano = parseInt(objects[0]);
+                                var array = [];
+                                for (var o in objects) {
+                                        if ((objects[o].length > 0) && (o > 0)) {
+                                                // estrapolo le coordinate
+                                                var coordinates = objects[o].split(",");
+                                                var path = []
+                                                for (var i=0; i < 6; i++) 
+                                                        path[i] = parseInt(coordinates[i]);
+                                                
+                                                // salvo le coodinate della path nell'array del piano
+                                                array.push(path);
+                                        }                                
+                                } 
+                                
+                                // salvo l'array delle path del piano nel dizionario
+                                out[numero_di_piano] = array;                        
+                        }              
+                }
+                return out;        
+        }
+        
+        
+        
         // funzione per caricare i piani nelle options dell'iframe
         function sendFloorsToIframe(json) {
                 var floors = [];
@@ -108,104 +162,7 @@
   
        
   
-  
  
- function couples(name, value) {
-        this.name = name;
-        this.value = value;
- }
- 
- function Point(piano, RFID, x, y, ingresso) {
- 
-        this.form_id = "pointForm";
-        this.name = "points";         
-        
-        this.piano = new couples("piano", piano);
-        this.RFID = new couples("RFID", RFID);
-        this.x = new couples("x", x);
-        this.y = new couples("y", y);
-        
-        if (ingresso)
-                this.ingresso = new couples("ingresso", "True");
-        else
-                this.ingresso = new couples("ingresso", "False");
- 
-        this.array = array;
-        function array() {
-                return [this.piano, this.RFID, this.x, this.y, this.ingresso]; 
-        }
- }
- 
- function Path(a, b, ascensore, scala) {
- 
-        this.form_id = "pathForm";
-        this.name = "paths";         
-        
-        this.a = couples("a", a);
-        this.b = couples("b", b);
-        this.ascensore = couples("ascensore", ascensore);
-        this.scala = couples("scala", scala);
- 
-        this.array = array;
-        function array() {
-                return [this.a, this.b, this.ascensore, this.scala]; 
-        }
- }
- 
- function Room(punto, nome_stanza, persone, altro, link) {
- 
-        this.form_id = "roomForm";
-        this.name = "rooms";         
-        
-        this.punto = couples("punto", punto);
-        this.nome_stanza = couples("nome_stanza", nome_stanza);
-        this.persone = couples("persone", persone);
-        this.altro = couples("altro", altro);
-        this.link = couples("link", link);
- 
-        this.array = array;
-        function array() {
-                return [this.punto, this.nome_stanza, this.persone, this.altro, this.link]; 
-        }
-        
- }
- 
- function addInput(element) {
- 
-        ID = "id_";
-        
-        var iframe = document.getElementById('the_iframe');
-        var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-        var form = innerDoc.getElementById(element.form_id);
-
-        var number = counter[element.name];
-        
-        if (number == null) 
-                number = 0;
-        else
-                number++;
-
-        var elements = element.array();
-        
-        for (var i in elements) {
-                var newform = innerDoc.createElement('input');
-                newform.type = "hidden";
-                newform.id = ID + element.name + "-" + number + "-" + elements[i].name;
-                newform.name = element.name + "-" + number + "-" + elements[i].name;
-                newform.value = elements[i].value;
-                form.appendChild(newform);
-        }
-        
-        counter[element.name] = number;
-        
-        return number;
- }
- 
- 
- function createPoint(piano, RFID, x, y, ingresso) {
-        var p = new Point(piano, RFID, x, y, ingresso);
-        return JSON.parse(addInput(p));
- }
  
 </script>
 
@@ -213,10 +170,7 @@
 <applet name="mapGenerator"
         id="mapGenerator"  
         code="main.MapGenerator.class"
-        archive="
-                {{STATIC_URL}}jar/MapGenerator.jar, 
-                {{STATIC_URL}}jar/plugin.jar
-        ">
+        archive="{{STATIC_URL}}jar/MapGenerator.jar">
         <param name="MAYSCRIPT" value="true">             
 </applet>
   
