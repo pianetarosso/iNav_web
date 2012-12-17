@@ -16,6 +16,7 @@ import datetime
 from PIL import Image
 from django.template.response import TemplateResponse
 from django.http import Http404
+from django.db.models import Max
 
 #import pdb;
 
@@ -42,12 +43,68 @@ def index(request):
 # Dettaglio di un edificio selezionato nell'index
 def detail(request, building_id):
         session = {}
+        
         b = get_object_or_404(Building, pk=building_id)
-        fl = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
-        session['floors'] = fl
         session['building'] = b
+        
+        session['floors'] = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
+        
+        points = Point.objects.filter(building=building_id).order_by('piano')
+        session['points'] = points
+        
+        temp_rooms = Room.objects.filter(building=building_id) 
+        ordered_rooms = {}
+        for r in temp_rooms:
+        
+                if not ordered_rooms.has_key(r.punto.piano.numero_di_piano):
+                        ordered_rooms[r.punto.piano.numero_di_piano] = []   
+                
+                ordered_rooms[r.punto.piano.numero_di_piano].append(r)
+                                
+        session['rooms'] = ordered_rooms
+        
+        
+        paths = Path.objects.filter(building=building_id)
+        
+        elevators = {}
+        stairs = {}
+        
+        for p in paths:
+                
+                if not elevators.has_key(p.a.piano.numero_di_piano):
+                        elevators[p.a.piano.numero_di_piano] = []
+                        
+                if not elevators.has_key(p.b.piano.numero_di_piano):
+                        elevators[p.b.piano.numero_di_piano] = []
+                        
+                if not stairs.has_key(p.a.piano.numero_di_piano):
+                        stairs[p.a.piano.numero_di_piano] = []
+                        
+                if not stairs.has_key(p.b.piano.numero_di_piano):
+                        stairs[p.b.piano.numero_di_piano] = []
+                        
+                if p.ascensore != '':
+                        elevators[p.a.piano.numero_di_piano].append(p.ascensore)
+                        elevators[p.b.piano.numero_di_piano].append(p.ascensore)
+                elif p.scala != '':
+                        stairs[p.a.piano.numero_di_piano].append(p.scala)
+                        stairs[p.b.piano.numero_di_piano].append(p.scala)
+        
+        session['elevators'] = elevators
+        session['stairs'] = stairs
+        
         return render_to_response('buildings/detail.html', session, context_instance = RequestContext(request))
     
+@login_required
+# lista degli edifici creati da un utente
+def my_buildings(request):
+        session = {}
+        
+        session['buildings'] = Building.objects.filter(utente=request.user)
+        
+        return render_to_response('buildings/my_buildings.html', session, context_instance = RequestContext(request))
+        
+        
 # ??????????????????????????????????????????????????????????????????????????
 # CHE E' STA' ROBA???????????????????????????????????????????
 def profile(request):
@@ -149,9 +206,9 @@ def step(request, new_id):
                 elif len(Point.objects.filter(building=b.id)) == 0 and len(Path.objects.filter(building=b.id)) == 0:
                         step = 3
                 else:
-                        print "Errore"
-                        print str(b)
-                        raise Http404
+                        session['building'] = b        
+                        return render_to_response('buildings/generate/redirect.html', session,  context_instance = RequestContext(request))
+                        
                      #   b.pronto = True
                      #   b.save()
                      #   return redirect('index')
@@ -291,7 +348,7 @@ def step(request, new_id):
                               
                           
                         # salvo i punti nel db, e nel contempo creo un dizionario con il punto
-                        # e l'id usato all'interno della pagina
+                        # e l'id temporaneo usato all'interno della pagina
                         points = {}
                         for form in point_formset.forms:
                                 temp_id = form.cleaned_data['temp_id']
@@ -311,6 +368,7 @@ def step(request, new_id):
                                 
                                 points[temp_id] = point
         
+                        # salvo le path correggendo i riferimenti ai punti A e B grazie a points
                         for form in path_formset.forms:
                                 temp_a = form.cleaned_data['temp_a']
                                 temp_b = form.cleaned_data['temp_b']
@@ -327,6 +385,8 @@ def step(request, new_id):
                                 path.save()
                                 
                                 
+                        # innanzitutto verifico che esistano delle stanze. 
+                        # Se ci sono, provveddo ad aggiornare il punto.
                         if room_formset.is_valid():
                         
                                 for form in room_formset.forms:
@@ -338,13 +398,24 @@ def step(request, new_id):
                                         
                                         room.save()
                         
-                       
-                       
-                #else:
-                 #       session['pointForm'] = PointFSet()    
+                        now = datetime.datetime.now()
+                        b.data_update = now
+                        b.pronto = True
+                        b.save()
+                        request.method = None
+                        
+                        # Se tutto e' andato bene, porto l'utente nella pagina dei details del building appena creato, e gli comunico che ha terminato il wizard  
+                        
+                        session['building'] = b
+                        print "redirect!" 
+                        return render_to_response('buildings/generate/redirect.html', session)
         
         
-        #print str(request.session.items())
+        
+        
+        
+        
+                
        # pdb.set_trace()
         session['building'] = b
         session['step'] = step
@@ -354,7 +425,16 @@ def step(request, new_id):
      
      
      
+# pagina dell'iframe che mostra le attivita' recenti sui building
+def iframe(request):
+
+        session ={}
         
+        # recupero i 10 buildings con attivita' piu' recente
+        updated_at = Building.objects.annotate(Max('data_update')) 
+        session['recent'] = updated_at[:9]
+                                
+        return render_to_response('buildings/iframe.html', session,  context_instance = RequestContext(request))
    
 
    
@@ -441,60 +521,12 @@ def parseFloor(f):
         } 
         return floor 
         
-# funzione per convertire una lista ricavata da un POST in una Path
-def parsePathPost(request, building):
-        p = Path() 
-        p.id_edificio = building  
-        p.x = element["x"] 
-        p.y = element["y"]
-        p.x1 = element["x1"] 
-        p.y1 = element["y1"]
-        p.numero_di_piano = element["numero_di_piano"] 
-        
-        return p          
+       
 
 
-# funzione per convertire un oggetto Point in una lista        
-def parsePoint(p):
-        point = {
-                'RFID' : p.RFID,
-                'x' : p.x,
-                'y' : p.y, 
-                'numero_di_piano' : p.numero_di_piano,
-                'ingresso' : p.ingresso,
-                'ascensore' : p.ascensore,
-                'scala' : p.scala,
-                'stanza' : p.stanza
-        } 
-        return point 
 
-# funzione per convertire una lista ricavata da un POST in un Point
-def parsePointPost(request, building):
-        p = Point() 
-        p.id_edificio = building
-        p.RFID = element["RFID"]      
-        p.x = element["x"] 
-        p.y= element["y"]
-        p.numero_di_piano = element["numero_di_piano"] 
-        p.ingresso = (element["ingresso"] == 'true')
-        p.ascensore = element["ascensore"]
-        p.scala = element["scala"]
-        p.stanza = element["stanza"]
-        
-        return p
-                  
-# funzione per convertire un oggetto Path in una lista        
-def parsePath(p):
-        path = {
-                'x' : p.x,
-                'y' : p.y, 
-                'x1' : p.x1,
-                'y1' : p.y1,
-                'numero_di_piano' : p.numero_di_piano,
-        } 
-        return path
-        
 
+ 
 
 
 

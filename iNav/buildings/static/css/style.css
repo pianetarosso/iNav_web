@@ -110,6 +110,15 @@ section#right_panel {
         margin-bottom:5px;
 }
 
+#map_details { 
+        height:150px;
+        width:250px; 
+        position:center;
+        border:1px solid blue;
+        padding:2px;
+        margin-bottom:5px;
+}
+
 #id_numero_di_piani {
         width:35px;
         float:left;

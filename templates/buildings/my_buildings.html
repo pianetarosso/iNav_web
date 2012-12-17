@@ -1,0 +1,18 @@
+{% extends "base.html" %}   
+
+{% block body %}
+        
+        {% if buildings.count > 0 %}
+        
+        Here are your buildings: </br></br>
+        <ul>
+                {% for b in buildings %}
+                        <li><a href="{% url buildings.views.detail building_id=b.id %}">{{b.nome}}</a></li>           
+                
+                {% endfor %}
+        </ul>
+        {% else %}
+                You haven't created anything yet.
+        {% endif %}
+
+{% endblock body %}

@@ -62,6 +62,8 @@ function calcHeight() {
                                                <li><a href="{% url admin:index %}">Administration</a></li>
                                         {% endif %}
                                         
+                                        <li><a href="{% url buildings.views.my_buildings %}">My Buildings</a></li>
+                                        
                                         <li><a href="{% url buildings.views.generate new_id=-1 %}">New Building</a></li>
                                         
                                         <li><a href="{% url account_logout%}">Logout</a></li>
@@ -104,7 +106,8 @@ function calcHeight() {
         <!-- conterrà le azioni recenti degli utenti, e le proprie mappe una volta loggato -->
         <section id="right_panel">
         
-                {% block extra_body %}              
+                {% block extra_body %}    
+                        <iframe width="100%" id="the_iframe" name="iframe" onLoad="calcHeight();" src="{% url buildings.views.iframe %}"  height="1" seamless="seamless" scrolling="NO" frameborder="0"> An iframe capable browser is required to view this web site. </iframe>
                 {% endblock extra_body %}  
         </section>
         

@@ -242,7 +242,7 @@
 
 <form enctype="multipart/form-data" action="{% url buildings.views.step new_id=building.pk %}" method="post" id="myform">{% csrf_token %}
 
-    <p><input type=submit" class="app_input" value="Next" onclick="resetHeight()"/></p>
+    <p><input type=submit" class="app_input" value="Next" onclick="resetHeight();"/></p>
 </form>
 
 <!--

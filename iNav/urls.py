@@ -19,40 +19,48 @@ admin.site.register(Path)
     
 urlpatterns = patterns('',
    
-    # Admin 
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-    
-    # Users
-    (r'^accounts/', include('allauth.urls')),
-    url(r'^accounts/profile/', 'buildings.views.profile'),
+        # Admin 
+        url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+        url(r'^admin/', include(admin.site.urls)),
+            
+        # Users
+        (r'^accounts/', include('allauth.urls')),
+        url(r'^accounts/profile/', 'buildings.views.profile'),
 
-    # Avatar
-    (r'^avatar/', include('avatar.urls')),
-    
-    # index
-    url(r'^buildings/$', 'buildings.views.index'),
-    url(r'^buildings/(?P<building_id>\d+)/$', 'buildings.views.detail'),
-    
-    # generazione building
-    url(r'^buildings/generate/new_building=(?P<new_id>-?\d+)', 'buildings.views.generate'),
-    url(r'^buildings/generate/step=(?P<new_id>\d+)', 'buildings.views.step'),
-#    url(r'^buildings/generate/point(?P<building_id>\d+)', 'buildings.views.postPoint'),
-#    url(r'^buildings/generate/path(?P<building_id>\d+)', 'buildings.views.postPath'),
-    
-    # generazione di immagini ridimensionate
-    url(r'^buildings/generate/image_r(?P<idf>\d+)&(?P<id_b>\d+)&(?P<width>\d+)', 'buildings.views.setBearingimage'),
+        # Avatar
+        (r'^avatar/', include('avatar.urls')),
+            
+        # index
+        url(r'^buildings/$', 'buildings.views.index'),
+        
+        # details
+        url(r'^buildings/(?P<building_id>\d+)/$', 'buildings.views.detail'),
+        url(r'^buildings/my_buildings', 'buildings.views.my_buildings'),
+        
+        # generazione building
+        url(r'^buildings/generate/new_building=(?P<new_id>-?\d+)', 'buildings.views.generate'),
+        url(r'^buildings/generate/step=(?P<new_id>\d+)', 'buildings.views.step'),
+            
+        # generazione di immagini ridimensionate
+        url(r'^buildings/generate/image_r(?P<idf>\d+)&(?P<id_b>\d+)&(?P<width>\d+)', 'buildings.views.setBearingimage'),
 
-    # recupero i dati (no csrf)
-  #  url(r'^buildings/get/building(?P<id>\d+)&(?P<latitude>\d+)&(?P<longitude>\d+)&(?P<radius>\d+)', 'buildings.views.getBuildings'), 
-    url(r'^buildings/get/floor&(?P<building_id>\d+)', 'buildings.views.getFloors'),   
-#    url(r'^buildings/get/point&(?P<building_id>\d+)', 'buildings.views.getPoints'),
-#    url(r'^buildings/get/path&(?P<building_id>\d+)', 'buildings.views.getPaths'),
+        # visualizzazione degli edifici creati piu' recentemente nell'iFrame
+        url(r'^buildings/iframe', 'buildings.views.iframe'),
+        
+        # recupero i dati (no csrf)
+        #  url(r'^buildings/get/building(?P<id>\d+)&(?P<latitude>\d+)&(?P<longitude>\d+)&(?P<radius>\d+)', 'buildings.views.getBuildings'), 
+        url(r'^buildings/get/floor&(?P<building_id>\d+)', 'buildings.views.getFloors'),   
+        #    url(r'^buildings/get/point&(?P<building_id>\d+)', 'buildings.views.getPoints'),
+        #    url(r'^buildings/get/path&(?P<building_id>\d+)', 'buildings.views.getPaths'),
 
 )
 
 if settings.DEBUG:
-    # static files (images, css, javascript, etc.)
-    urlpatterns += patterns('',
-        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {
-        'document_root': settings.MEDIA_ROOT}))
+        # static files (images, css, javascript, etc.)
+        urlpatterns += patterns('',
+                (
+                        r'^media/(?P<path>.*)$', 
+                        'django.views.static.serve', 
+                        {'document_root': settings.MEDIA_ROOT}
+                )
+        )

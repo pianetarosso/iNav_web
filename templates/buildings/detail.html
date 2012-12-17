@@ -1,33 +1,144 @@
 {% extends "base.html" %}
 
-
 {% block body %}
 
-{% if user.is_authenticated %}
-        {% if user.id != building.utente.id %}
-                {{building.utente.username}}
-        {% else %}
-                congratulazioni, questa mappa l'hai fatta tu!
-        {% endif %}
+<script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg&sensor=false&libraries=geometry">
+</script>
+
+<script type="text/javascript"
+        src="{{STATIC_URL}}java/jquery-1.8.2.js">
+</script>
+
+<script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.generatePolygon.js"> 
+</script>
+
+<script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.index.js"> 
+</script>
+
+<script type="text/javascript">
+
+        // contiene il poligono creato dall'utente
+        var polygon = new google.maps.MVCArray();
+        
+        var map;
+
+        // Caricamento della mappa
+        function loadMap() {
+
+                mapOptions = {
+                        center: new google.maps.LatLng({{building.posizione.y}}, {{building.posizione.x}}),
+                        zoom: 1,
+                        mapTypeId: google.maps.MapTypeId.HYBRID
+                };
+                
+                map = new google.maps.Map(document.getElementById("map_details"), mapOptions);
+}
+
+        function loadPolygon() {
+         
+                loadMap();
+                
+                // inizializzo le variabili globali del js
+                initializeJS(map, polygons);
+                
+                polygon = parseJSONPolyline({{building.geometria.geojson|safe}}, {{building.utente.id}}, polygon , map);
+                
+                // imposto lo zoom e la posizione ottimali per visualizzare il poligono
+                bounds = setOptimalPanEZoom(polygon.getAt(0));
+        }
+
+        
+</script>
+
+<body onload="loadPolygon()"/>
+
+{% if user.is_authenticated and user.id == building.utente.id %}
+        You have created this Map! 
 {% else %}
-       {{building.utente.username}} 
+       This map belongs to {{building.utente.username}}!
+{% endif %}
+
+</br></br>
+Some Map's details:
+
+{% if building.foto != '' %}
+        <img src="{{MEDIA_URL}}{{b.foto}}" width=150 height=100>
 {% endif %}
 <ul>
-<li><a> {{building.nome}}</a></li>
-<li><a> {{building.versione}}</a></li>
-<li><a> {{building.latitudine}}</a></li>
-<li><a> {{building.longitudine}}</a></li>
-<li><a> {{building.numero_di_piani}}</a></li>
+        <li><a> Name: {{building.nome}}</a></li>
+        <li><a> Ready: {{building.pronto}}</a></li>
+        <li><a> Version: {{building.versione}}</a></li>
+        <li><a> Link: <a href="{{building.link}}"/>{{building.link}}</a></a></li>
+        <li><a> Description: {{building.descrizione}} </a></li>
+        <li><a> Creation Date: {{building.data_creazione}} </a></li>
+        <li><a> Last Update: {{building.data_update}} </a></li>
+        <li><a> Number of mapped floors: {{building.numero_di_piani}}</a></li>
+        <li><a> Latitude: {{building.posizione.y}}</a></li>
+        <li><a> Longitude: {{building.posizione.x}}</a></li>
 </ul>
+        <div id="map_details"></div>
+
 <br><br>
-{% if floors%}
+
+Floors:</br>
 <ul>
-{%for fl in floors%}
-<img src="{{MEDIA_URL}}{{fl.link}}" width=150 height=100>
-<li><a>{{fl.bearing}}<a><li>
-<li><a>{{fl.numero_di_piano}}<a><li>
+{% for fl in floors %}
+        <li><a> Number of floor: {{fl.numero_di_piano}}</a></li>
+        <li><a> Bearing: {{fl.bearing}}</a></li>
+               
+        <li><a> Elevators:
+                {% for e, list in elevators.items %}
+                        {% if  e == fl.numero_di_piano %}
+                                {% for l in list %}
+                                        {{l}}
+                                {% endfor %}
+                        {% endif %}
+                {% endfor %}
+        </a></li>
+        
+        
+        <li><a> Stairs:
+                {% for e, list in stairs.items %}
+                        {% if  e == fl.numero_di_piano %}
+                                {% for l in list %}
+                                        {{l}}
+                                {% endfor %}
+                        {% endif %}
+                {% endfor %}
+        </a></li>
+        
+        
+        <li><a> Rooms:
+                {% for e, list in rooms.items %}
+                        {% if  e == fl.numero_di_piano %}
+                                {% for l in list %}
+                                        {{l}}
+                                {% endfor %}
+                        {% endif %}
+                {% endfor %}
+        </a></li>
+        
+        <li><a> People:
+                {% for e, list in rooms.items %}
+                        {% if  e == fl.numero_di_piano %}
+                                {% for l in list %}
+                                        {{l.persone}},
+                                {% endfor %}
+                        {% endif %}
+                {% endfor %}
+        </a></li>
+        
+        <li><a> Map:</a></li>
+        <img src="{{MEDIA_URL}}{{fl.immagine}}" width=150 height=100>
+        
+        </br></br>
+        
 {%endfor%}
-{%endif%}
+
 
 {% endblock body%}
 
+ 
