@@ -48,7 +48,7 @@ urlpatterns = patterns('',
         url(r'^buildings/iframe', 'buildings.views.iframe'),
         
         # recupero i dati (no csrf)
-        #  url(r'^buildings/get/building(?P<id>\d+)&(?P<latitude>\d+)&(?P<longitude>\d+)&(?P<radius>\d+)', 'buildings.views.getBuildings'), 
+          url(r'^buildings/get/building=(?P<id_>-?\d+)&(?P<latitude>-?\d+)&(?P<longitude>-?\d+)&(?P<radius>-?\d+)', 'buildings.views.getBuildings'), 
         url(r'^buildings/get/floor&(?P<building_id>\d+)', 'buildings.views.getFloors'),   
         #    url(r'^buildings/get/point&(?P<building_id>\d+)', 'buildings.views.getPoints'),
         #    url(r'^buildings/get/path&(?P<building_id>\d+)', 'buildings.views.getPaths'),

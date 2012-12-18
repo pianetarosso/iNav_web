@@ -447,23 +447,48 @@ def iframe(request):
    
 # posso scegliere se l'edificio e' recuperato tramite id, oppure
 # dando delle coordinate e un raggio in km
-#@csrf_exempt
-#def getBuildings(request, id_="-1", latitude="0", longitude="0", radius="-1"):
-#        if id_!="-1":
-#                building = get_object_or_404(Building, pk=id_, ready=True)
- #               b = parseBuilding(building)
-  #              return HttpResponse(simplejson.dumps(bp), mimetype="application/json") 
-   #     elif latitude!="0" and longitude!="0" and int(radius) > 0:
-    #            building = get_list_or_404(Building, ready=True )
-     #           data=[]
-      #          for b in building:
-       #                 if(testNear(b, latitude, longitude, radius)):
-        #                        data.append(parseBuilding(b))
-         #       return HttpResponse(simplejson.dumps(data), mimetype="application/json")
-        #raise Http404  
+@csrf_exempt
+def getBuildings(request, id_, latitude, longitude, radius):
+        if int(id_) != -1:
+        
+                # recupero il building
+                building = get_object_or_404(Building, pk=id_, pronto=True)
+                floors = get_list_or_404(Floor, building=building)
+                points = get_list_or_404(Point, building=building)
+                paths = get_list_or_404(Path, building=building)
+                rooms = get_list_or_404(Room, building=building)
+                
+                # parso i vari componenti
+                out = parseBuilding(building)
+                
+                out['piani'] = []
+                out['stanze'] = []
+                out['punti'] = []
+                out['paths'] = []
+                
+                for f in floors:
+                        out['piani'].append(parseFloor(f))
+                        
+                for p in points:
+                        out['punti'].append(parsePoint(p))
+                        
+                for p in paths:
+                        out['paths'].append(parsePath(p))
+                        
+                for r in rooms:
+                        out['stanze'].append(parseRoom(r))
+                
+                return HttpResponse(simplejson.dumps(out), mimetype="application/json") 
+                
+        elif int(radius) > 0:
+                building = get_list_or_404(Building, ready=True )
+                
+                # filtrare i buildings in base alla distanza
+                return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+        raise Http404  
+       
        
 # recupero i piani di un determinato edificio
-#@csrf_exempt
 @login_required
 def getFloors(request, building_id="-1"):
          
@@ -488,26 +513,32 @@ def getFloors(request, building_id="-1"):
 
 ############################################################################################
 ## FUNZIONI VARIE DI CALCOLO E CONVERSIONE                
-                
-                
-# funzione per calcolare se un edificio si trova in un raggio di tot km da un punto
-def testNear(building, latitude, longitude, radius):
-###### DA RIEMPIRE
-        return True
 
 
 # funzione per convertire un oggetto Building in una lista        
 def parseBuilding(b):
         building = {
                 'nome' : b.nome,
-                'versione' : b.versione,
-                'latitudine' : b.latitudine,
-                'longitudine' : b.longitudine,
-                'indirizzo' : b.indirizzo,
+                'descrizione' : b.descrizione,
+                'link' : b.link,
+                'id' : b.pk,
+                
                 'numero_di_piani' : b.numero_di_piani,
-                'foto' : b.foto.url
-        } 
-        return building  
+                'foto' : "",
+                
+                'versione' : b.versione,
+                'data_creazione' : str(b.data_creazione),
+                'data_update' : str(b.data_update),
+                
+                'posizione' : b.posizione.coords,
+                'geometria' : b.geometria.coords
+        }
+
+        if b.foto != '':
+                building['foto'] = b.foto.url
+        
+        
+        return {'building' : building}  
    
         
 # funzione per convertire un oggetto Floor in una lista        
@@ -516,15 +547,51 @@ def parseFloor(f):
         floor = {
                 'numero_di_piano' : f.numero_di_piano,
                 'bearing' : str(f.bearing),
-                'link' : f.immagine.url,
-                'id' : f.id
+                'id' : f.pk,
+                'immagine' : f.immagine.url,
+                'descrizione' : f.descrizione
         } 
+        
         return floor 
         
+# funzione per convertire un oggetto Room in una lista        
+def parseRoom(r):
+        
+        room = {
+                'punto' : r.punto.pk,
+                'nome_stanza' : r.nome_stanza,
+                'persone' : r.persone,
+                'altro' : r.altro,
+                'link' : r.link
+        } 
+        
+        return room 
        
+# funzione per convertire un oggetto Room in una lista        
+def parsePath(p):
+        
+        path = {
+                'a' : p.a.pk,
+                'b' : p.b.pk,
+                'ascensore' : p.ascensore,
+                'scala' : p.scala
+        } 
+        
+        return path 
 
-
-
+# funzione per convertire un oggetto Room in una lista        
+def parsePoint(p):
+        
+        point = {
+                'id' : p.pk,
+                'piano' : p.piano.numero_di_piano,
+                'RFID' : p.RFID,
+                'x' : p.x,
+                'y' : p.y,
+                'ingresso' : p.ingresso
+        } 
+        
+        return point 
 
  
 
