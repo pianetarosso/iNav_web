@@ -1,0 +1,18 @@
+
+<body>
+        {% if recent.count > 0 %}
+                Last buildings update: </br></br>
+                
+                {% for r in recent %}
+                        {{r.utente}} has updated <a href="{% url buildings.views.detail building_id=r.id %}">{{r.nome}}</a>
+                        </br></br>
+                        
+                
+                {%endfor%}
+        {% else %}
+                No updates rigth now!
+        {%endif%}
+
+</body>
+
+

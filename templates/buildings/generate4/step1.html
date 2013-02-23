@@ -1,0 +1,102 @@
+{% extends "generate_building.html" %}   
+
+{% block body %}
+ 
+<script type="text/javascript">
+
+// funzione per gestire l'incremento del campo "Numero di piani"
+
+
+
+$(function() {
+   
+    $(".button").parent().find("input").prop('readonly', "readonly");
+    $(".button").parent().find("input").val(0);
+    $(".button").click(function() {
+        var $button = $(this);
+        var oldValue = $button.parent().find("input").val();
+    
+        if ($button.text() == "+") 
+    	  var newVal = parseFloat(oldValue) + 1;
+    	else 
+    	  var newVal = parseFloat(oldValue) - 1;
+    	      
+    	$button.parent().find("input").val(newVal);
+    	arrangeFloors();
+    });
+    
+    
+});
+
+$(document).ready(function() {
+        arrangeFloors();
+});
+// faccio in modo che il numero dei piani sia sempre "crescente" e che NON ci siano
+// sovrapposizioni di numeri
+function arrangeFloors() {
+
+        number_of_forms = $("#id_form-TOTAL_FORMS").val();
+        
+        var value = NaN;
+        text_a = "id_form-";
+        text_b = "-numero_di_piano";
+        
+        for(var i=0; i < number_of_forms; i++) {
+                name = '#' + text_a + i + text_b;
+                
+                if (value == NaN)
+                        value = parseFloat($(name).val());
+                else {
+                        var new_value = parseFloat($(name).val());
+                        if (value >= new_value) { 
+                                new_value = value + 1; 
+                                $(name).val(new_value);
+                        }
+                        value = new_value;
+                }
+        }
+}
+
+
+</script>
+
+
+
+
+
+<form enctype="multipart/form-data" action="{% url buildings.views.step new_id=building.pk %}" method="post">
+        {% csrf_token %}
+
+        {{ formset.management_form }}
+        
+        <table>
+                {% for form in formset %}
+        
+                        {{ form.non_field_errors }}
+    
+                                <div class="fieldWrapper">
+                                        {{ form.numero_di_piano.errors }}
+        
+                                        <label for="id_numero_di_piano">Floor number*:</label></br>
+                                        {{ form.numero_di_piano }}
+                                        <div class="inc button" 
+                                                style="background: url({{STATIC_URL}}images/buttons.png) 
+                                                no-repeat; background-position: 0 -29px;">-</div>
+                                        <div class="dec button"
+                                                style="background: url({{STATIC_URL}}images/buttons.png) 
+                                                no-repeat;">+</div>
+                                </div> 
+                                <div class="fieldWrapper">
+                                        {{ form.immagine.errors }}
+        
+                                        <label for="id_link">Image*:</label></br>
+                                        {{ form.immagine }}
+                                </div> </br>
+                {% endfor %}
+    </table>
+        
+    <p><input type="submit" value="Next" onclick="resetHeight()"/></p>
+    
+</form>
+
+{% endblock body %}

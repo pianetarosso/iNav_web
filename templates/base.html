@@ -2,28 +2,39 @@
 
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/style.css" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.0/jquery.min.js"></script> 
 
-<script type="text/javascript">
 
-// Funzione per il ridimensionamento automatico dell'altezza dell'IFRAME nella pagina di generazione di una nuova mappa
+<script> 
+        // variabile per bloccare l'update quando non è necessario
+        var update = true;
+        
+        // funzione per l'aggiornamento automatico del pannello destro 
+        setInterval( function() {
+                if (update)            
+                        $('#right_panel').fadeOut('fast').load('{% url buildings.views.update_list %}').fadeIn("slow");
+        }, 60000);
+        
+        
+        // funzione per cambiare il colore dei link di navigazione in base a che pagina è visualizzata
+        function changeLinkColor(place) {  
+                link = document.getElementById(place + "_link");
+                link.style.color = "#ff8800";  
+        }
+        
+</script>  
 
-function calcHeight() { 
-        //find the height of the internal page 
-        var the_height= document.getElementById('the_iframe').contentWindow.document.body.scrollHeight;  
-        //change the height of the iframe 
-        document.getElementById('the_iframe').height= the_height; 
-}
-</script>
 
 <div id="Imports">
-<!-- Blocchi per importare i Javascript -->
-{% block imports %}
-{% endblock imports %}
+
+        <!-- Blocchi per importare i Javascript -->
+        {% block imports %}
+        {% endblock imports %}
 </div>
-<!-- carico SEMPRE i dati dell'utente ed eventuali avatar -->
-{% load account %}
-{% load avatar_tags %}
- 
+
+
+<!-- carico SEMPRE i dati dell'utente -->
+{% load account %} 
        
 <html>
 
@@ -38,86 +49,85 @@ function calcHeight() {
   
         <body>    
   
-                <header id="page_header">
+                <header id="page_header" class="nav_link">
   
-                        <h1 id="title">iNav</h1>
-                        
-                        
-                        
-                        {% if user.is_authenticated %}
-                                        <img id="profile_image" src="{% avatar_url user 80 %}"/>
-                                        <br>       
-                        {% endif %}
-                        
+                        <a href="{% url buildings.views.show %}" style="display: block">
+                        <img alt="iNav, THE internal navigation app" height="194px;" src="{{STATIC_URL}}images/header.png" style="display:block; margin-left:auto; margin-right:auto" width="960px;">
+</a> 
+                      
+                       
                         <nav id="navigation">
                         <ul>
-                                <li><a href="{% url buildings.views.index %}">Home</a></li>
-                                
-                                {% if user.is_authenticated %}
+                                         {% if user.is_superuser %}
+                                                       <li><a href="{% url admin:index %}">Administration</a></li>
+                                         {% endif %}
+                                                
+                                        <li><a id="home_link" href="{% url buildings.views.index %}">Home</a></li>
+                                        
+                                        {% if user.is_authenticated %}
+                                                
+                                                {% if user.useradditionalfields.complete_buildings > 0 %}
+                                                        <li><a 
+                                                                id="my_buildings_link" 
+                                                                href="{% url buildings.views.my_buildings %}">
+                                                                My Buildings
+                                                        </a></li>
+                                                {% endif %}
+                                                
+                                                {% if user.useradditionalfields.incomplete_buildings < 3 %}
+                                                        <li><a 
+                                                                id="new_building_link" 
+                                                                href="{% url buildings.views.generate_building idb=-1 %}">
+                                                                New Building
+                                                        </a></li>
+                                                {% endif %}
+    
+    <!-- MANCA ANCORA QUESTA PAGINA -->
+                                                {% if user.useradditionalfields.incomplete_buildings > 0 %}
+                                                        <li><a id="incomplete_buildings_link" href="">Incomplete Buildings</a></li>
+                                                {% endif %}
+                                                
+                                                <li><a href="{% url account_logout%}">Logout</a></li>
+                                                
+                                        {% else %}
+                                        
+                                                <li><a href="{% url account_login %}">Login</a></li>  
+                                                <li><a href="{% url account_signup %}">Sign up</a></li>
                         
-                                         <li><a href="{% url buildings.views.profile %}">Profile</a></li> 
-                                         
-                                         
-                                        {% if user.is_superuser %}
-                                               <li><a href="{% url admin:index %}">Administration</a></li>
                                         {% endif %}
-                                        
-                                        <li><a href="{% url buildings.views.my_buildings %}">My Buildings</a></li>
-                                        
-                                        <li><a href="{% url buildings.views.generate new_id=-1 %}">New Building</a></li>
-                                        
-                                        <li><a href="{% url account_logout%}">Logout</a></li>
-                                        
-                                {% else %}
-                                
-                                        <li><a href="{% url account_login %}">Login</a></li>  
-                                        <li><a href="{% url account_signup %}">Sign up</a></li>
-                
-                                {% endif %}
-                                <!-- aggiungere INFO e My Buildings-->
+                               
                         </ul>
                         </nav>
-        
-                        <div id ="user" >
-    
-                                {% if user.is_authenticated %}
-                                        <p>Hello <a> {% user_display user %}</a>!</p>    
-                                {% else%}
-                                        <p>Welcome Guest!</p>                        
-                                {% endif %}
-    
-                        </div>
-        
-       
-        
-    
-        
+                       
                 </header>
-  
-  <div id="container">
-        <!-- testo principale -->
-        <section id="contents_left">
-                {% block body %}  
-                        {% block content %}
-                        {% endblock content %}
-                {% endblock body %}
-        </section>
-        
-        <!-- conterrà le azioni recenti degli utenti, e le proprie mappe una volta loggato -->
-        <section id="right_panel">
-        
-                {% block extra_body %}    
-                        <iframe width="100%" id="the_iframe" name="iframe" onLoad="calcHeight();" src="{% url buildings.views.iframe %}"  height="1" seamless="seamless" scrolling="NO" frameborder="0"> An iframe capable browser is required to view this web site. </iframe>
-                {% endblock extra_body %}  
-        </section>
-        
-  </div>
-    
-  <footer id="page_footer">
-    
-       <p> copright MF segnalazione a pippo ingarsia</p>
-  </footer>
-
+  <span class="container_link">
+          <div id="container">
+                <!-- testo principale -->
+                <section id="contents_left">
+                        {% block body %}  
+                                
+                        {% endblock body %}
+                </section>
+                
+                <section id="right_panel">
+                
+                        {% block extra_body %}  
+                                
+                                <!-- primo caricamento della lista -->
+                                <script>
+                                        $('#right_panel').load('{% url buildings.views.update_list %}')
+                                </script>
+                               
+                        {% endblock extra_body %}  
+                </section>
+                
+          </div>
+            
+          <footer id="page_footer">
+            
+               <p> copright MF segnalazione a pippo ingarsia</p>
+          </footer>
+  </span>
     
  </body>
 </html>

@@ -3,14 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////     
 
 
-// variabile per la generazione della mappa, step0
-// serve a disabilitare/abilitare gli ascoltatori sugli edifici
-// in caso di violazione generica da parte dell'utente
-var infoWindowListenerEnabled = false;
-
-
 // creazione dell'infobubble degli EDIFICI nell'INDEX + listener
-function create_infoBubble(myLatlng, nome, versione, link, foto, piani, creazione, update) {
+function create_infoBubble(myLatlng, nome, link, foto) {
         
         var marker = new google.maps.Marker({
                 position: myLatlng,
@@ -18,44 +12,24 @@ function create_infoBubble(myLatlng, nome, versione, link, foto, piani, creazion
                 title:nome
         });
             
-       var infoBubble = new InfoBubble({
+            
+        var message_first = '<div style="text-align:center"><br>';
+        
+        message_first += '<a href="'+link+'">'+nome+'<\/a><br><br>'
+        message_first += '<img src='+ foto +' height=100 >';
+        message_first += '</div>';
+        
+        var infoBubble = new InfoBubble({
                 maxWidth: 300,
                 minWidth: 100,
                 maxHeight: 200,
                 minHeight: 100,
-                hideCloseButton: true
+                hideCloseButton: false,
+                content: message_first
         });
             
         currentInfoBubble = infoBubble;
-            
         
-        var message_first = '<div style="text-align:center"><br>';
-
-        message_first += '<img src='+ foto +' width=150 height=100><br><br>';
-        message_first += '<a href="'+link+'">Link<\/a><br>';
-        
-        message_first += '</div>';
-        
-        
-        var bold = "style='font-weight:bold;'";
-        var message_second ="<ul>";
-                         
-        var data_creazione = new Date(creazione*1000);
-        var data_update = new Date(update*1000);
-        var indirizzo = reverseGeocoder(myLatlng);
-        
-        message_second ="<a "+bold+">Release: </a>"+versione+"<br>";
-        message_second ="<a "+bold+">Address:</a> "+indirizzo+"<br>";
-        message_second +="<a "+bold+">Floors: </a>"+piani+"<br>";
-        message_second +="<a "+bold+">Created: </a>"+data_creazione.toDateString()+"<br>";
-        message_second +="<a "+bold+">Last update: </a>"+data_update.toDateString();
-            
-        message_second +="</ul>";
-        
-        
-        infoBubble.addTab(nome, message_first);
-        infoBubble.addTab('Details', message_second);
-     
         google.maps.event.addListener(marker, 'click', function() {
                 currentInfoBubble.close();
                 infoBubble.open(map,marker);
@@ -93,9 +67,7 @@ function parseJSONPolyline(data, user_id, polygons, map) {
         return polygons;
 }
 
-
-
-// Funzione per PARSARE EFFETTIVAMENTE il JSON di DJANGO delle POLYLINE in
+// Funzione per convertire il JSON di DJANGO delle POLYLINE in
 // un ARRAY di COORDINATE
 function coord_to_path(coords, path) {
 
@@ -111,10 +83,11 @@ function coord_to_path(coords, path) {
     return path;       
 }
 
+
 // Semplice funzione per generare colori di riempimento delle POLYLINE diversi
 // per ogni utente in base al loro ID
 function generate_color(user_id) {
-//        color = '#'+Math.floor(Math.random() *16777215).toString(16)
+
         user_id = user_id * 70 - 15;
         color = '#'+Math.floor(16777215 - user_id ).toString(16);
         return color;
@@ -122,39 +95,3 @@ function generate_color(user_id) {
 
 
 
-/*
-
-// funzione per la creazione delle infowindow delle POLYLINE  durante la GENERAZIONE di un
-// nuovo edificio
-function generate_infoWindow(polygons, polygon, id_edificio, nome_utente) {
-        
-        var text = "";
-        text += '<strong>' + "Signal an abuse!" + '</strong><br><br>';
-        text += 'Building_id: '+id_edificio;
-        text += '<br>User name: ' + nome_utente;
-        
-        polygon.infoWindow = new google.maps.InfoWindow({
-                content: text,
-        }); 
-        
-        polygon.infoWindow.setPosition(new google.maps.LatLng(0, 0));
-        
-        google.maps.event.addListener(polygon, 'click', function() {
-                
-                for(p in polygons) {
-                        console.log(polygons[p]);
-                        polygons[p].infoWindow.close();
-                }
-                
-                if (infoWindowListenerEnabled)
-                        polygon.infoWindow.open(map);
-        });
-        
-        polygons.push(polygon);
-        console.log(polygons);
-        
-        return polygons;
-}
-
-
-*/

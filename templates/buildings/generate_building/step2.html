@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block imports %} 
+        
+        
+        <script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg&sensor=false&libraries=geometry">
+        </script>
+        
+        <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.index.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.geocoding.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.generatePolygon.js"> 
+       </script>
+       
+        
+<script type="text/javascript">
+
+        
+        
+        // VARIABILI /////////////////////////////////////////////////////////////////////////
+
+
+        // contiene tutti i poligoni che saranno disegnati sulla mappa, compreso quello creato dall'utente
+        var polygons = new google.maps.MVCArray();
+
+        // mappa
+        var map;
+        
+        
+
+        // chiamata al loading della pagina
+        function initialize() {
+                
+                // imposto la voce del menù di navigazione
+                changeLinkColor("new_building");
+                
+                // imposto l'id dell'utente
+                id = {{ request.user.id }}
+                
+                // carico i valori di controllo della dimensione del poligono
+                initializeGeometryLimits({{ MAX_GEOMETRY_AREA }}, {{ MIN_GEOMETRY_AREA }}, 
+                        {{ MAX_GEOMETRY_LENGTH }}, {{ MIN_GEOMETRY_LENGTH }});
+                
+                // carico la mappa
+                loadMap();
+
+                // qui carico i poligoni di tutti i buildings        
+                loadAllPolygons();
+                
+                // inizializzo le variabili globali del js
+                initializeJS(map, polygons);
+                
+                // abilito il disegno dell'edificio da parte dell'utente
+                polygons = disegna_edificio(polygons, id); 
+                
+        }
+
+        
+
+        // Caricamento della mappa
+        function loadMap() {
+
+                mapOptions = {
+                        center: new google.maps.LatLng(-0, 0),
+                        zoom: 1,
+                        mapTypeId: google.maps.MapTypeId.HYBRID
+                };
+                
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                
+        }
+
+        // caricamento di tutti i poligoni
+        function loadAllPolygons() {
+
+                {% for b in buildings %}
+                        polygons = parseJSONPolyline({{b.geometria.geojson|safe}}, {{b.utente.id}}, polygons, map);
+                {% endfor %}
+        }
+
+
+</script>
+
+{%endblock imports %}
+
+
+
+
+{% block body %}
+
+<body onload="initialize()">
+  
+    <input id="address" input type="text" style="color:#888;" 
+    value="Write an address here!" onfocus="inputFocus(this)" onblur="inputBlur(this)" />
+      <input type="button" value="Find!" onclick="codeAddress()">
+      
+    <div id="map_canvas"></div>
+
+</body>
+{% endblock body %}
+
+{% block extra_body %}  
+        <script>
+                // blocco l'aggiornamento del pannello laterale
+                update = false;
+        </script>
+
+
+<p>Now you have to draw the shape of your building on the map on the left</p>
+</br>
+<b>Instructions:</b>
+
+        <ul>
+        <li>If you click on the map you create a new Marker.</li> 
+        <li>If you click on a Marker, you can move or delete it.</li>
+        <li>Be careful and accurate!</li>
+        </ul>
+        
+        
+{% endblock extra_body %}  
+
+
+
+

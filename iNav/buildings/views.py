@@ -1,24 +1,37 @@
-from django.http import HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404
-from django.shortcuts import redirect
-from buildings.models import *
-from buildings.forms import *
+# -*- coding: utf-8 -*-
+
+from django.http import HttpResponse, Http404
+from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect
+
 from django.template import RequestContext
-from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+
 from django.forms.formsets import formset_factory
 from django.forms.models import modelformset_factory
-#from django.core import serializers
+
 from django.utils import simplejson
+
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+
 import datetime
 from PIL import Image
-from django.template.response import TemplateResponse
-from django.http import Http404
+
+from django.contrib.auth.models import User
 from django.db.models import Max
 
-#import pdb;
+from django.contrib.gis.measure import D
+from django.contrib.gis.geos import *
+
+
+from buildings.models import *
+from buildings.forms import *
+
+
+
+
+
+
 
 ############################################################################################
 MAX_TEMPORARY_BUILDINGS = 3
@@ -38,8 +51,215 @@ def index(request):
         session = {}
         building_list = Building.objects.filter(pronto=True).order_by('id')
         session['buildings'] = building_list
+        user = request.user
+        
+       
         return render_to_response('buildings/index.html', session, context_instance = RequestContext(request))
 
+
+# pagina che mostra le attività recenti sui building
+def update_list(request):
+
+        session ={}
+        
+        # recupero i 10 buildings con attività più recente
+        updated_at = Building.objects.annotate(Max('data_update')) 
+        
+        # filtro gli edifici per tenere solo quelly "pronti" 
+        i = 0
+        session['recent'] = []
+        for u in updated_at:
+                if i == 9:
+                        break 
+                elif u.pronto:
+                        session['recent'].append(u)
+                        i+=1
+        
+        session['recent'].reverse()
+       
+        return render_to_response('buildings/update_list.html', session,  context_instance = RequestContext(request))
+   
+
+# lista degli edifici creati da un utente   
+@login_required
+def my_buildings(request):
+        session = {}
+        
+        session['buildings'] = Building.objects.filter(utente=request.user, pronto=True)
+        
+        return render_to_response('buildings/my_buildings.html', session, context_instance = RequestContext(request))
+         
+   
+   
+   
+# generazione di un nuovo edifici
+@login_required
+def generate_building(request, idb):
+
+        # creo la variabile di sessione 
+        session = {}
+        
+        # verifico se è possibile parsare il valore in input
+        try:
+                b_id = int(idb)
+        except Exception: 
+                raise Http404
+   
+        userAdditionaFields = request.user.useradditionalfields
+        
+        # verifico se l'utente ha già 3 edifici incompleti. in tal caso lo rispedisco alla Home
+        if userAdditionaFields.incomplete_buildings == MAX_TEMPORARY_BUILDINGS:
+                return redirect('buildings.views.index')                        
+                       
+        # se l'id in input è < 0 vuol dire che sto creando l'edificio ora
+        if b_id < 0:
+        
+                now = datetime.datetime.now()
+                
+                building = Building(
+                        utente = request.user, 
+                        nome = str(request.user) + str(now), 
+                        pronto = False, 
+                        data_creazione = now, 
+                        data_update = now, 
+                        versione = 1
+                )
+                
+                # salvo l'edificio temporaneo
+                building.save()
+                
+                # aggiorno l'id
+                b_id = building.pk
+                
+                # aggiorno gli edifici incompleti dell'utente
+                userAdditionaFields.incomplete_buildings += 1
+                userAdditionaFields.save()
+                
+                return redirect('buildings.views.generate_building', idb=b_id)
+                
+           
+        else:
+                # recupero l'edificio
+                building = get_object_or_404(Building, pk=b_id)
+                
+                # verifico se l'edificio appartiene all'utente
+                if building.utente != request.user:
+                        raise Http404 
+                  
+                # verifico se "per caso" l'edificio è già pronto
+                if building.pronto:
+                        return redirect('buildings.views.detail', building_id=b_id)
+                        
+                        
+                # verifico il punto del wizard in cui mi trovo (da 1 a 5)
+                
+                # STEP 1: ################################################################################à
+                #       - Nome edificio
+                #       - Descrizione
+                #       - Link
+                #       - Foto di copertina
+                if building.versione == 1:
+                        
+                        # caso di ritorno con i dati della form
+                        if request.method == 'POST':
+                        
+                                # recupero i dati della form dal post
+                                form = StepOneForm(request.POST, request.FILES, instance=building)
+                                
+                                if form.is_valid():
+                
+                                        building = form.save(commit=False)
+                                       
+                                        building.data_update = datetime.datetime.now()
+                                        
+                                        building.versione = 2
+                                        
+                                        # aggiorno l'edificio
+                                        building.save()
+                                        
+                                        # richiamo la stessa pagina, la logica dietro farà tutto il resto
+                                        return redirect('buildings.views.generate_building', idb=b_id)
+                                      
+                                else:
+                                        # la form non è valida, per cui la rispedisco al mittente
+                                        session['form'] = form
+                                          
+                        else:
+                                # costruisco una form vuota e la passo all'utente
+                                form = StepOneForm()
+                                session['form'] = form 
+                        
+                        # importo l'id dell'edificio
+                        session['building'] = b_id
+                        
+                        # restituisco il template
+                        return render_to_response('buildings/generate_building/step1.html', session,  context_instance = RequestContext(request))
+   
+                # END STEP 1 #
+                #########################################################################################
+                
+                
+                # STEP 2: ################################################################################à
+                #       - posizione
+                #       - geometria
+                #       - nazione
+                #       - citta
+                elif building.versione == 2:
+                
+                        # caso di ritorno con i dati della form
+                        if request.method == 'POST':
+                        
+                                # recupero i dati della form dal post
+                                form = StepTwoForm(request.POST, request.FILES, instance=building)
+                                
+                                if form.is_valid():
+                
+                                        building = form.save(commit=False)
+                                       
+                                        building.data_update = datetime.datetime.now()
+                                        
+                                        building.versione = 3
+                                        
+                                        # aggiorno l'edificio
+                                        building.save()
+                                        
+                                        # richiamo la stessa pagina, la logica dietro farà tutto il resto
+                                        return redirect('buildings.views.generate_building', idb=b_id)
+                                      
+                                else:
+                                        # la form non è valida, per cui la rispedisco al mittente
+                                        session['form'] = form
+                                          
+                        else:
+                                # costruisco una form vuota e la passo all'utente
+                                form = StepTwoForm()
+                                
+                                session['form'] = form 
+                                
+                        # aggiungo alla sessione tutti gli edifici pronti       
+                        session['buildings'] = Building.objects.filter(pronto=True)
+                        
+                        # importo l'id dell'edificio
+                        session['building'] = b_id
+                        
+                        # restituisco il template
+                        return render_to_response('buildings/generate_building/step2.html', session,  context_instance = RequestContext(request))
+                
+              
+                
+                
+                
+                
+                
+                
+                # END STEP 2 #
+                #########################################################################################
+   
+   
+   
+   
+
+   
 # Dettaglio di un edificio selezionato nell'index
 def detail(request, building_id):
         session = {}
@@ -48,9 +268,8 @@ def detail(request, building_id):
         session['building'] = b
         
         session['floors'] = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
-        
-        points = Point.objects.filter(building=building_id).order_by('piano')
-        session['points'] = points
+       
+        session['points'] = Point.objects.filter(building=building_id).order_by('piano')
         
         temp_rooms = Room.objects.filter(building=building_id) 
         ordered_rooms = {}
@@ -95,29 +314,36 @@ def detail(request, building_id):
         
         return render_to_response('buildings/detail.html', session, context_instance = RequestContext(request))
     
-@login_required
-# lista degli edifici creati da un utente
-def my_buildings(request):
-        session = {}
-        
-        session['buildings'] = Building.objects.filter(utente=request.user)
-        
-        return render_to_response('buildings/my_buildings.html', session, context_instance = RequestContext(request))
-        
+
         
 # ??????????????????????????????????????????????????????????????????????????
-# CHE E' STA' ROBA???????????????????????????????????????????
+# CHE è STà ROBA???????????????????????????????????????????
 def profile(request):
         return render_to_response('buildings/profile.html', {'user': request.user}, context_instance = RequestContext(request))
  
+# vetrina dell'applicazione
+def show(request):
+        return
 
-
+# Cancellazione di un edificio 
+@login_required
+def delete(request, b_id):
+        
+        building = get_object_or_404(Building, pk=b_id)
+        
+        if building.utente != request.user:
+                raise Http404
+        
+        else:
+               deleteBuilding(building)
+               # aggiungere un return che faccia senso
+        
 
 # Generazione di un nuovo edificio
 
 
 @login_required
-# new_id e' l'id dell'edificio che viene instanziato all'apertura della pagina
+# new_id è l'id dell'edificio che viene instanziato all'apertura della pagina
 def generate(request, new_id):
         session = {}
         
@@ -126,7 +352,7 @@ def generate(request, new_id):
         except Exception: 
                 raise Http404
         
-        # verifico se l'utente e' abilitato a creare un nuovo edificio, o se ne ha gia' troppi
+        # verifico se l'utente è abilitato a creare un nuovo edificio, o se ne ha già troppi
         # in "cantiere"
         if b_id == -1:
                 
@@ -141,13 +367,13 @@ def generate(request, new_id):
                         
                         return redirect('buildings.views.generate', new_id=building.pk)
          
-        # l'edificio esiste gia', ergo decido quali dati mandare a seconda del punto del wizard
+        # l'edificio esiste già, ergo decido quali dati mandare a seconda del punto del wizard
         elif b_id >= 0:
         
                 building = get_object_or_404(Building, pk=b_id)
                 floors = Floor.objects.filter(building=building)
                 
-                # verifico se e' stato impostato il bearing agli edifici
+                # verifico se è stato impostato il bearing agli edifici
                 test_bearing = len(floors) > 0
                 for f in floors:
                        test_bearing = test_bearing and (f.bearing != None)  
@@ -157,7 +383,7 @@ def generate(request, new_id):
                         raise Http404
                 elif building.pronto:
                         return redirect('buildings.views.detail', building_id=b_id)
-                # se non e' stato impostato il bearing ci troviamo nel 3o step (JApplet)
+                # se non è stato impostato il bearing ci troviamo nel 3o step (JApplet)
                 elif test_bearing:
                         session['building'] = building
                        # floors = get_list_or_404(Floor.objects.order_by('numero_di_piano'), building=b_id)
@@ -170,7 +396,7 @@ def generate(request, new_id):
                        
                         return render_to_response('buildings/generate/generate-map.html', session, context_instance = RequestContext(request))
                      
-                # verifico il nome dell'edificio, se e' lo stesso del momento della costruzione
+                # verifico il nome dell'edificio, se è lo stesso del momento della costruzione
                 # allora mi trovo ancora nel primo step   
                 elif building.nome == str(request.user) + str(building.data_creazione):
                         buildings= Building.objects.filter(pronto=True).order_by('utente')
@@ -183,7 +409,7 @@ def generate(request, new_id):
 
 
 @login_required
-# new_id e' l'id del nuovo edificio, si occupa l'oggetto soprastante di impostarlo
+# new_id è l'id del nuovo edificio, si occupa l'oggetto soprastante di impostarlo
 def step(request, new_id):
         
         session ={}
@@ -283,7 +509,7 @@ def step(request, new_id):
     
    # Passo 2:
    # Utilizzo per l'ultima volta la mappa di google per effettuare la sovrapposizione dell'immagine 
-   # del piano terra (o piu' vicino superiore) sull'immagine della mappa e ricavare il bearing
+   # del piano terra (o più vicino superiore) sull'immagine della mappa e ricavare il bearing
    
         if step == 2:
         
@@ -404,7 +630,7 @@ def step(request, new_id):
                         b.save()
                         request.method = None
                         
-                        # Se tutto e' andato bene, porto l'utente nella pagina dei details del building appena creato, e gli comunico che ha terminato il wizard  
+                        # Se tutto è andato bene, porto l'utente nella pagina dei details del building appena creato, e gli comunico che ha terminato il wizard  
                         
                         session['building'] = b
                         print "redirect!" 
@@ -425,17 +651,7 @@ def step(request, new_id):
      
      
      
-# pagina dell'iframe che mostra le attivita' recenti sui building
-def iframe(request):
 
-        session ={}
-        
-        # recupero i 10 buildings con attivita' piu' recente
-        updated_at = Building.objects.annotate(Max('data_update')) 
-        session['recent'] = updated_at[:9]
-                                
-        return render_to_response('buildings/iframe.html', session,  context_instance = RequestContext(request))
-   
 
    
 ############################################################################################        
@@ -445,8 +661,8 @@ def iframe(request):
 ############################################################################################
 ## RESTITUZIONE DEI DATI TRAMITE JSON PER JAPPLET O ANDROID
    
-# posso scegliere se l'edificio e' recuperato tramite id, oppure
-# dando delle coordinate e un raggio in km
+# posso scegliere se l'edificio è recuperato tramite id, oppure
+# dando delle coordinate e un raggio in centinaia di m
 @csrf_exempt
 def getBuildings(request, id_, latitude, longitude, radius):
         if int(id_) != -1:
@@ -480,11 +696,26 @@ def getBuildings(request, id_, latitude, longitude, radius):
                 
                 return HttpResponse(simplejson.dumps(out), mimetype="application/json") 
                 
+	# caso in cui faccio la ricerca in base alla distanza
         elif int(radius) > 0:
-                building = get_list_or_404(Building, ready=True )
+
+		# costruisco il punto che sarà il centro della ricerca
+		pnt = fromstr('POINT(' + str(longitude) + ' ' + str(latitude) +')', srid=4326)
+
+		# effettuo l'interrogazione basandomi sulla distanza passata
+		buildings = Building.objects.filter(posizione__distance_lte=(pnt, D(m = int(radius) * 100)))
+
+		print str(pnt)
+		print str(buildings)
                 
-                # filtrare i buildings in base alla distanza
-                return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+                # elimino gli edifici che non sono pronti
+		out = {}
+		out['lista'] = []
+                for b in buildings:
+			if b.pronto:
+                        	out['lista'].append(parseBuilding(b)['building'])
+                
+                return HttpResponse(simplejson.dumps(out), mimetype="application/json")
         raise Http404  
        
        
@@ -567,7 +798,7 @@ def parseRoom(r):
         
         return room 
        
-# funzione per convertire un oggetto Room in una lista        
+# funzione per convertire un oggetto Path in una lista        
 def parsePath(p):
         
         path = {
@@ -579,7 +810,7 @@ def parsePath(p):
         
         return path 
 
-# funzione per convertire un oggetto Room in una lista        
+# funzione per convertire un oggetto Point in una lista        
 def parsePoint(p):
         
         point = {
@@ -593,7 +824,22 @@ def parsePoint(p):
         
         return point 
 
- 
+# funzione per cancellare completamente un edificio (manca la cancellazione delle immagini)
+def deleteBuilding(building):
+
+        for path in Path.objects.filter(building = building.id): 
+                path.delete()
+                
+        for room in Room.objects.filter(building = building.id): 
+                room.delete()
+                        
+        for point in Point.objects.filter(building = building.id): 
+                point.delete()
+                        
+        for floor in Floor.objects.filter(building = building.id): 
+                floor.delete()
+                        
+        building.delete()
 
 
 
@@ -603,7 +849,7 @@ def parsePoint(p):
 # funzione che restituisce un'immagine ridimensionata di un piano.
 # utilizzata quando viene eseguito il calcolo del bearing nella creazione
 # di un nuovo building
-# width => nuova larghezza
+# width => nuova larghezzasetBearing
 # idf   => id del floor interessato
 # id_b  => id del building interessato
 @login_required

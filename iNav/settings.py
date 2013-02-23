@@ -141,10 +141,9 @@ INSTALLED_APPS = (
 #    'allauth.socialaccount.providers.persona',
 #    'allauth.socialaccount.providers.soundcloud',
 #    'allauth.socialaccount.providers.twitter',
-    'avatar',
     'south',
-    'PIL'
-    
+    'PIL',
+    'sorl.thumbnail'
     
 )
 
@@ -157,6 +156,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "allauth.account.context_processors.account",
     "allauth.socialaccount.context_processors.socialaccount",
+    'buildings.context_processors.constants',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -187,7 +187,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'licantropus83@gmail.com'
-EMAIL_HOST_PASSWORD = 'Marco+Manuela=Tanto Amore'
+EMAIL_HOST_PASSWORD = 'Sara+Giovanni=Valentino&Carlotta'
 EMAIL_PORT = 587
 
 # A sample logging configuration. The only tangible logging
@@ -212,3 +212,22 @@ LOGGING = {
         },
     }
 }
+
+
+
+# COSTANTI INTERNE A BUILDING #############################################################################
+
+# Area massima e minima della geometria (m^2)
+MAX_GEOMETRY_AREA = 50000
+MIN_GEOMETRY_AREA = 10
+                
+# Lunghezza massima e minima di un lato della geometria
+MAX_GEOMETRY_LENGTH = 1000
+MIN_GEOMETRY_LENGTH = 2
+                
+# Dimensione massima delle immagini in input (Mb)
+MAX_IMAGE_SIZE = 3 * 1024 * 1024
+                
+                
+                
+                

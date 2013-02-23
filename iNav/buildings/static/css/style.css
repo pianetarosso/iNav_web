@@ -1,88 +1,42 @@
 html { 
         height: 100%;
-        width:100%; 
+        width:100%;
 }
 
 body { 
-        padding:15px auto;
         font-family: Arial, "MS Trebuchet", sans-serif;
 }
 
 header {
-        font-family: Arial, "MS Trebuchet", sans-serif;
-        background-color:orange;
+        padding-top:10px;
 }
+
+#navigation {
+        padding-top: 10px;
+        float:right;
+}
+
+
+#page_header nav ul li, #page_footer nav ul li {
+        list-style: none;
+        margin: 0 20px 0 0;
+        padding-left: 0;
+        display:inline;
+}
+
 
 footer {
         clear:  both;
         width: 100%;
         display: block;
         padding-top:10px;
-}
-
-footer#page_footer {
         text-align:center;
-        background-color:orange;
 }
-
-p {
-        margin:0 0 20px 0;
-}
-
-
-#page_header nav ul, footer#page_footer nav ul {
-        list-style: none;
-        margin: 0;
-        padding-left: 0;
-}
-
-#page_header nav ul li, #page_footer nav ul li {
-        padding:0;
-        margin: 0 20px 0 0;
-        display:inline;
-}
-
-#title {
-        text-align:center;
-        font-size: 50px; 
-        font-weight: bold;
-        font-family: arial, verdana, sans-serif;
-}
-
-#navigation {
-        float:right;
-}
-
-header#navigation, header#user {
-        padding-left:5px;
-        padding-right:5px;
-}
-
-#user a{
-        text-transform:capitalize;
-        font-weight: bold;
-}
-
-#user {
-        margin-left:5px;
-}
-
-#profile_image {
-        border:1px solid blue;
-        padding:2px;
-        margin-bottom:2px;
-        margin-top:-50px;
-        margin-left:5px;
-}
-
-
-/*********************************************************************************/
-
 
 #container {
         display:block;
         width:100%;
-        padding:5px;
+        padding-top: 10px;
 }
 
 section#contents_left {
@@ -94,8 +48,74 @@ section#contents_left {
 section#right_panel {
         float:right;
         width: 30%;
-        
+        padding-top:10px; 
 }
+
+
+
+
+
+
+
+
+
+
+/* LINK *******************************/
+
+a:link, a:visited, a:hover {
+        background-color: transparent;
+        text-decoration: none;
+}
+
+
+.nav_link a:link, .nav_link a:visited {
+        color: black;
+}
+
+.nav_link a:hover {
+        color: #7aacd6;
+}
+
+.container_link a:link, .container_link a:visited {
+        color: #2f3dcc;
+}
+
+.container_link a:hover {
+        color: #7aacd6;
+}
+
+
+/************************************/
+/****************************************************************************************/
+
+/*
+
+
+p {
+        margin:0 0 20px 0;
+}
+
+
+
+
+#title {
+        text-align:center;
+        font-size: 50px; 
+        font-weight: bold;
+        font-family: arial, verdana, sans-serif;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*******************************************************************************/

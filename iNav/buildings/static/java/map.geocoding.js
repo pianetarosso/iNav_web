@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-// Converto un indirizzo in coordinata
+// Converto un indirizzo in coordinate
 function codeAddress() {
 
         geocoder = new google.maps.Geocoder();
@@ -33,7 +33,7 @@ function reverseGeocoder(latLng) {
         });
 }           
    
-// modifico il colore del testo della casella di input e aggiunglo blur   
+// modifico il colore del testo della casella di input e aggiungo blur   
 function inputFocus(i){
         
         if(i.value==i.defaultValue) { 

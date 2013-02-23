@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from django.conf.urls.defaults import patterns, include, url
 
-# Uncomment the next two lines to enable the admin:
+
 from django.contrib import admin
 from buildings.models import *
 from django.conf import settings
@@ -25,34 +27,56 @@ urlpatterns = patterns('',
             
         # Users
         (r'^accounts/', include('allauth.urls')),
-        url(r'^accounts/profile/', 'buildings.views.profile'),
 
         # Avatar
         (r'^avatar/', include('avatar.urls')),
             
+        # vetrina dell'applicazione (da creare)
+        url(r'^buildings/iNav/$', 'buildings.views.show'),
+        
         # index
         url(r'^buildings/$', 'buildings.views.index'),
         
-        # details
+        # visualizzazione degli edifici creati più recentemente 
+        url(r'^buildings/update_list', 'buildings.views.update_list'),
+        
+        # recupero un edificio in base all'id, o di una lista di edifici in base alla posizione
+        url(r'^buildings/get/building=(?P<id_>-?\d+)&(?P<latitude>-?\d+\.\d+)&(?P<longitude>-?\d+\.\d+)&(?P<radius>\d+)', 'buildings.views.getBuildings'), 
+        
+        # recupero i piani di un edificio (usato nel wizard)
+        url(r'^buildings/get/floor&(?P<building_id>\d+)', 'buildings.views.getFloors'),   
+        
+        # cancellazione di un edificio in base all'id
+        url(r'^buildings/delete=(?P<b_id>\d+)', 'buildings.views.delete'),   
+        
+        
+        # generazione building
+        #url(r'^buildings/generate/list, 'buildings.views.list_incomplete'),
+        #url(r'^buildings/generate/new_building=(?P<new_id>-?\d+)', 'buildings.views.generate'),
+        
+        url(r'^buildings/generate/new_building=(?P<idb>-?\d+)', 'buildings.views.generate_building'),
+        #url(r'^buildings/generate/step=(?P<new_id>\d+)', 'buildings.views.step'),
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        # dettagli di un edificio e lista dei propri edifici
         url(r'^buildings/(?P<building_id>\d+)/$', 'buildings.views.detail'),
         url(r'^buildings/my_buildings', 'buildings.views.my_buildings'),
         
-        # generazione building
-        url(r'^buildings/generate/new_building=(?P<new_id>-?\d+)', 'buildings.views.generate'),
-        url(r'^buildings/generate/step=(?P<new_id>\d+)', 'buildings.views.step'),
+        
             
-        # generazione di immagini ridimensionate
+            
+            
+        # generazione di immagini ridimensionate (serve?)
         url(r'^buildings/generate/image_r(?P<idf>\d+)&(?P<id_b>\d+)&(?P<width>\d+)', 'buildings.views.setBearingimage'),
 
-        # visualizzazione degli edifici creati piu' recentemente nell'iFrame
-        url(r'^buildings/iframe', 'buildings.views.iframe'),
         
-        # recupero i dati (no csrf)
-          url(r'^buildings/get/building=(?P<id_>-?\d+)&(?P<latitude>-?\d+)&(?P<longitude>-?\d+)&(?P<radius>-?\d+)', 'buildings.views.getBuildings'), 
-        url(r'^buildings/get/floor&(?P<building_id>\d+)', 'buildings.views.getFloors'),   
-        #    url(r'^buildings/get/point&(?P<building_id>\d+)', 'buildings.views.getPoints'),
-        #    url(r'^buildings/get/path&(?P<building_id>\d+)', 'buildings.views.getPaths'),
-
 )
 
 if settings.DEBUG:

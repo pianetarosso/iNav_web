@@ -1,9 +1,162 @@
+# -*- coding: utf-8 -*-
+
 from buildings.models import *
+from buildings.context_processors import constants
+
 from django.forms import *
 from django import forms
 from django.forms.formsets import *
+
 from PIL import Image
+from django.conf import settings
+
+
+
+
+
+# Form per la generazione dell'edificio: ######################################################################à
+
+
+# STEP 1
+#       - Nome edificio
+#       - Descrizione
+#       - Link
+#       - Foto di copertina 
+class StepOneForm(ModelForm):
+        class Meta:
+        
+                model = Building
                 
+                exclude = (
+                        'versione', 
+                        'data_creazione', 
+                        'data_update', 
+                        'pronto', 
+                        'utente',
+                        'posizione',
+                        'geometria',
+                        'nazione',
+                        'citta'
+                )
+                
+        # verifico che il nome sia effettivamente unico
+        def clean_nome(self):
+                
+                nome = self.cleaned_data['nome']
+                if nome == None or nome == '':
+                        raise forms.ValidationError("Name missing or not valid!!!")
+                return nome                 
+
+        # verifico che l'immagine sia leggibile e la sua dimensione non superi i 3 Mb                
+        def clean_foto(self):
+                        
+                image = self.cleaned_data['foto']
+                        
+                if image:
+                        if image._size > MAX_IMAGE_SIZE:
+                                raise ValidationError("Image file too large ( maximum 3 Mb )")
+                        return image
+                else:
+                        raise ValidationError("Couldn't read uploaded image")
+        
+
+# STEP 2
+#       - posizione
+#       - geometria
+#       - nazione
+#       - città 
+class StepTwoForm(ModelForm):
+        class Meta:
+        
+                model = Building
+                
+                exclude = (
+                        'versione', 
+                        'data_creazione', 
+                        'data_update', 
+                        'pronto', 
+                        'utente',
+                        'nome',
+                        'descrizione',
+                        'link',
+                        'foto'
+                )
+                
+                widgets = {
+                        'geometria'     : HiddenInput(),
+                        'posizione'     : HiddenInput(),
+                        'nazione'       : HiddenInput(),
+                        'citta'         : HiddenInput()
+                }  
+                
+        # verifico alcuni campi della geometria 
+        def clean_geometria(self):
+        
+                data = self.cleaned_data['geometria']
+                
+                # verifico che la geometria non sia sovrapposta ad altre
+                if Building.objects.filter(geometria__intersects=data, pronto=True):
+                        raise forms.ValidationError("You cannot draw over another Building!!!")
+                
+                # verifico che l'area sia inferiore al valore massimo (in m^2)        
+                if data.area.sq_m > MAX_GEOMETRY_VOLUME: # m^2
+                        raise forms.ValidationError("Your building is too big!!!")
+                        
+                # verifico che l'area sia maggiore del valore minimo (in m^2)        
+                if data.area.sq_m < MIN_GEOMETRY_VOLUME: # m^2
+                        raise forms.ValidationError("Your building is too small!!!")
+                        
+                
+                        
+                # verifico che la lunghezza di ogni lato della geometria sia compatibile con
+                # i valori massimi e minimi (in metri)
+                for l in data.length:
+                       if l.m > MAX_GEOMETRY_LENGTH: 
+                                raise forms.ValidationError("Your building is too big!!!")
+                                
+                       if l.m < MIN_GEOMETRY_LENGTH: 
+                                raise forms.ValidationError("Your building is too small!!!")
+                                
+                return data
+                
+        
+        # verifico che la "posizione" sia all'interno della "geometria"
+        def clean_posizione(self):
+                
+                data = self.cleaned_data['posizione']
+                data_g = self.cleaned_data['geometria']
+                
+                if not data_g.contains(data):
+                        raise forms.ValidationError("Point is not inside geometry!!!")   
+                
+                 
+
+#########################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # FORM DELL'EDIFICIO
 class BuildingForm(ModelForm):
@@ -28,12 +181,12 @@ class BuildingForm(ModelForm):
                 if Building.objects.filter(geometria__intersects=data, pronto=True):
                         raise forms.ValidationError("You cannot draw over another Building!!!")
                         
-                if data.area.sq_m > 500000: # m^2
-                        raise forms.ValidationError("Your building is too big!!!")
+            #    if data.area.sq_m > 500000: # m^2
+            #            raise forms.ValidationError("Your building is too big!!!")
                         
-                for l in data.length:
-                       if l.m > 1000: # m
-                                raise forms.ValidationError("Your building is too big!!!")
+            #    for l in data.length:
+            #           if l.m > 1000: # m
+            #                    raise forms.ValidationError("Your building is too big!!!")
                 return data
                 
         def clean_nome(self):

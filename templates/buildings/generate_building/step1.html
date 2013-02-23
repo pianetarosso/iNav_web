@@ -1,0 +1,51 @@
+{% extends "base.html" %} 
+
+
+
+
+{% block body %}
+<script>
+        
+</script>
+
+
+<body onload='changeLinkColor("new_building")'>
+
+        <p>Hello!</p>
+        <p>Thank you for start creating a new building!!!</p>
+        <p>Tell us some additional details about your building.</p> 
+
+        <form enctype="multipart/form-data" action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
+
+                {{ form.non_field_errors }}
+            <div class="fieldWrapper">
+                {{ form.nome.errors }}
+                
+                <label for="id_nome">Name*:</label></br>
+                {{ form.nome }}
+            </div> </br>
+            
+            <div class="fieldWrapper">
+                {{ form.descrizione.errors }}
+                
+                <label for="id_nome">Description:</label></br>
+                {{ form.descrizione }}
+            </div> </br>
+            
+            <div class="fieldWrapper" style="cols:20;">
+                {{ form.link.errors }}
+                
+                <label for="id_nome">Link:</label></br>
+                {{ form.link }}
+            </div> </br>
+            
+            <div class="fieldWrapper">
+                {{ form.foto.errors }}
+                <label for="id_foto">Insert a photo (optional):</label></br>
+                {{ form.foto }}
+            </div></br>
+           
+            <p><input type="submit" value="Next Step"/></p>
+        </form>
+</body>
+{%endblock body %}

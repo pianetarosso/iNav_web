@@ -21,8 +21,11 @@
 <script type="text/javascript">
 
 
+   
 function initialize() {
         
+        changeLinkColor("home");
+
         var mapOptions = {
                 center: new google.maps.LatLng(-0, 0),
                 zoom: 1,
@@ -33,27 +36,23 @@ function initialize() {
         
         
         {% if buildings %}
-        var infobubbles = new Array();
-        var counter = 0;
-        {% for building in buildings %}
-                var lat = parseFloat("{{building.posizione.y}}");
-                var lng = parseFloat("{{building.posizione.x}}");
-                var myLatlng = new google.maps.LatLng(lat, lng);
+                var infobubbles = new Array();
+                var counter = 0;
+                {% for building in buildings %}
+                        var lat = parseFloat("{{building.posizione.y}}");
+                        var lng = parseFloat("{{building.posizione.x}}");
+                        var myLatlng = new google.maps.LatLng(lat, lng);
 
-                infobubble =  create_infoBubble(myLatlng, 
-                                        "{{building.nome}}", 
-                                        "{{building.versione}}", 
+                        infobubble =  create_infoBubble(myLatlng, 
+                                        "{{building.nome}}",
                                         "{% url buildings.views.detail building.id %}", 
                                         "{{MEDIA_URL}}{{building.foto}}", 
-                                        "{{building.numero_di_piani}}", 
-                                        {{building.data_creazione|date:"U"}}, 
-                                        {{building.data_update|date:"U"}},
                                         map
                                 );
-                google.maps.event.addListener(map, 'click', function() {
-                        infobubble.close();
-                }); 
-        {% endfor %}
+                        google.maps.event.addListener(map, 'click', function() {
+                                infobubble.close();
+                        }); 
+                {% endfor %}
         {% endif %} 
 }
 </script>
@@ -71,9 +70,4 @@ function initialize() {
     <div id="map_canvas"></div>
  {% endblock body %}
 
-
-<!-- 
-DA FARE:
-
-        -aggiungere il geocoding automatico dalle coordinate all'indirizzo nell'hidd
 

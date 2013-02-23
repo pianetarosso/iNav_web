@@ -7,11 +7,24 @@ var markers;
 var path; 
 var polygons;
 
-max_length = 1000; // m
-max_area = 500000; // m^2
-        
+// valori limite per il disegno di un edificio
+var max_length; // m
+var min_length;
+
+var max_area; // m^2
+var min_area;  
+      
 ////////////////////////////////////////////////////////////////////////////////////////////
      
+// funzione per impostare le dimensioni massime e minime di un edificio
+function initializeGeometryLimits(max_area, min_area, max_length, min_length) {
+
+        this.max_length = max_length;
+        this.min_length = min_length;
+        
+        this.max_area = max_area;
+        this.min_area = min_area;
+}
 
 // inizializzo le variabili globali all'avvio    
 function initializeJS(map, polygons) {
@@ -102,14 +115,17 @@ function setUserPolygonPoints(latLng, markerClickableDraggable) {
                         google.maps.event.addListener(marker, 'click', function(event) {
                                 
                                 for (var i = 0, I = markers.length; i < I && markers[i] != marker; ++i);
+                                
                                 old = path.getAt(i);
-                                path.removeAt(i);   
+                                path.removeAt(i);  
+                                 
                                 if (!testMeasures(path)) 
                                         path.insertAt(i, old);
                                 else {
                                         marker.setMap(null);
                                         markers.splice(i, 1);    
                                 }   
+                                
                                 updateGeometrie(path);
                         });
 
@@ -133,13 +149,6 @@ function setUserPolygonPoints(latLng, markerClickableDraggable) {
         }        
 }
 
-
-
-function bloccaDisegno() {
-        for(var i=0; i<markers.length; i++) 
-                markers[i].setMap(null)
-        google.maps.event.clearListeners(map, "click") ;
-}
 
 // aggiorno i campi GEOMETRIA E PUNTO delle form di Django
 function updateGeometrie(path) {
@@ -200,10 +209,14 @@ function testMeasures(path) {
                         alert(message_too_long);
                         return false; 
                 }
+                
+                if (length_m < min_length) 
+                        return false; 
+                      
         }
         
         area_m = google.maps.geometry.spherical.computeArea(path);
-        //console.log(area_m);
+        
         if (area_m >= max_area) {
                 alert(message_too_big);
                 return false;  
@@ -266,35 +279,36 @@ function transformBoundsToPixels(bounds) {
 // generazione dell'immagine sulla mappa
 
 function prepareImage(directionDeg, image, width) {
-          // content element of a rich marker
-var richMarkerContent    = document.createElement('div');
 
-image.style.opacity = 0.75;
-image.style.width = width+"px";
-image.style.height = 'auto';
+        // content element of a rich marker
+        var richMarkerContent    = document.createElement('div');
 
-// rotation in degree
-//var directionDeg         = 144 ;
+        image.style.opacity = 0.75;
+        image.style.width = width+"px";
+        image.style.height = 'auto';
 
-// create a container for the arrow
-var rotationElement      = document.createElement('div');
-var rotationStyles       = 'display:block;' +
-                           '-ms-transform:      rotate(%rotationdeg);' +
-                           '-o-transform:       rotate(%rotationdeg);' +
-                           '-moz-transform:     rotate(%rotationdeg);' +
-                           '-webkit-transform:  rotate(%rotationdeg);' ;
+        // rotation in degree
+        //var directionDeg         = 144 ;
 
-// replace %rotation with the value of directionDeg
-rotationStyles           = rotationStyles.split('%rotation').join(directionDeg);
+        // create a container for the arrow
+        var rotationElement      = document.createElement('div');
+        var rotationStyles       = 'display:block;' +
+                                   '-ms-transform:      rotate(%rotationdeg);' +
+                                   '-o-transform:       rotate(%rotationdeg);' +
+                                   '-moz-transform:     rotate(%rotationdeg);' +
+                                   '-webkit-transform:  rotate(%rotationdeg);' ;
 
-rotationElement.setAttribute('style', rotationStyles);
-rotationElement.setAttribute('alt',   'arrow');
+        // replace %rotation with the value of directionDeg
+        rotationStyles           = rotationStyles.split('%rotation').join(directionDeg);
 
-// append image into the rotation container element
-rotationElement.appendChild(image);
+        rotationElement.setAttribute('style', rotationStyles);
+        rotationElement.setAttribute('alt',   'arrow');
 
-// append rotation container into the richMarker content element
-richMarkerContent.appendChild(rotationElement);
+        // append image into the rotation container element
+        rotationElement.appendChild(image);
+
+        // append rotation container into the richMarker content element
+        richMarkerContent.appendChild(rotationElement);
 
         return richMarkerContent.innerHTML;
 }
