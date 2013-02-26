@@ -13,7 +13,7 @@ function codeAddress() {
                 function(results, status) {
                         if (status == google.maps.GeocoderStatus.OK) {
                                 map.setCenter(results[0].geometry.location);
-                                map.setZoom(14);
+                                map.setZoom(15);
                         } 
                         else 
                                 alert('Geocode was not successful for the following reason: ' + status);
@@ -21,13 +21,14 @@ function codeAddress() {
         );
 }
 
-// converto una coordinata in indirizzo
-function reverseGeocoder(latLng) {
+// converto una coordinata in indirizzo e lo passo alla funzione "funct" in input
+function reverseGeocoder(latLng, funct) {
         geocoder = new google.maps.Geocoder();
         geocoder.geocode({'latLng': latLng}, 
                 function(results, status) {
                         if (status == google.maps.GeocoderStatus.OK) 
-                                return results[0].formatted_address;
+                                funct(results);
+                                //return results[0].formatted_address;
                         else 
                                 return 'Geocode was not successful for the following reason: ' + status;
         });

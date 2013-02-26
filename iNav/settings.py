@@ -218,15 +218,18 @@ LOGGING = {
 # COSTANTI INTERNE A BUILDING #############################################################################
 
 # Area massima e minima della geometria (m^2)
-MAX_GEOMETRY_AREA = 50000
+MAX_GEOMETRY_AREA = 20000
 MIN_GEOMETRY_AREA = 10
                 
 # Lunghezza massima e minima di un lato della geometria
-MAX_GEOMETRY_LENGTH = 1000
+MAX_GEOMETRY_LENGTH = 200
 MIN_GEOMETRY_LENGTH = 2
                 
 # Dimensione massima delle immagini in input (Mb)
 MAX_IMAGE_SIZE = 3 * 1024 * 1024
+
+# Chiave GooGle Maps
+G_MAPS = "AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg"
                 
                 
                 

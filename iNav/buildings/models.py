@@ -8,19 +8,18 @@ import datetime
 import os
 
 
-def content_file_name(instance, filename):
-                
-        estensione = '.jpg'
-                
+
+
+# generazione dell'estensione 
+def generate_extension(filename):
+
+        estensione = '.jpg'        
         posizione_punto = filename.rfind('.')
                 
         if posizione_punto > 0:
                 estensione = filename[posizione_punto:]
                 
-        now = datetime.datetime.now()
-        print str(instance.utente)
-        
-        return '/'.join(['buildings', str(instance.utente.pk), str(now) + estensione])
+        return estensione
                 
     
 class Building(models.Model):
@@ -32,15 +31,19 @@ class Building(models.Model):
         def __unicode__(self):
                 return self.nome
          
-       
+       # creazione del percorso per il salvataggio della foto di vetrina
+        def content_file_name(instance, filename):
+
+                return '/'.join(['buildings', 
+                        str(instance.utente.pk), 
+                        str(instance.pk), 
+                        'vetrina' + generate_extension(filename)])
        
         
         # caratteristiche dell'edificio (PUNTO 1)
         nome = models.CharField(max_length=200, unique=True)
         descrizione = models.TextField(max_length=1000, blank=True)
         link = models.URLField(blank=True)
-        
-        
         
         foto = ImageField(upload_to=content_file_name, blank=True)
         
@@ -73,6 +76,16 @@ class Building(models.Model):
 class Floor(models.Model):
     
           
+        # creazione del percorso per il salvataggio delle foto dei piani
+        def content_file_name(instance, filename):
+
+                nome_piano = 'floor_' + str(numero_di_piano)
+                
+                return '/'.join(['buildings', 
+                        str(instance.building.utente.pk), 
+                        str(instance.building.pk), 
+                        nome_piano + generate_extension(filename)])
+                        
         # edificio di riferimento
         building = models.ForeignKey(Building)
         

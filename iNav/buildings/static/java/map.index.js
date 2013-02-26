@@ -3,43 +3,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////     
 
 
-// creazione dell'infobubble degli EDIFICI nell'INDEX + listener
-function create_infoBubble(myLatlng, nome, link, foto) {
-        
-        var marker = new google.maps.Marker({
-                position: myLatlng,
-                map: map,
-                title:nome
-        });
-            
-            
-        var message_first = '<div style="text-align:center"><br>';
-        
-        message_first += '<a href="'+link+'">'+nome+'<\/a><br><br>'
-        message_first += '<img src='+ foto +' height=100 >';
-        message_first += '</div>';
-        
-        var infoBubble = new InfoBubble({
-                maxWidth: 300,
-                minWidth: 100,
-                maxHeight: 200,
-                minHeight: 100,
-                hideCloseButton: false,
-                content: message_first
-        });
-            
-        currentInfoBubble = infoBubble;
-        
-        google.maps.event.addListener(marker, 'click', function() {
-                currentInfoBubble.close();
-                infoBubble.open(map,marker);
-                currentInfoBubble = infoBubble;
-                map.panTo(myLatlng);
-                map.setZoom(17);
-        });
-        
-        return infoBubble;
-}
 
 
 // Funzione per il PARSING delle POLYLINE ricavate dal db di django
@@ -94,4 +57,74 @@ function generate_color(user_id) {
 }
 
 
+// disegno tutti i poligoni sulla mappa, generando il colore in base al user_id
+function setPolygonOnMap(polygons, user_id) {
+
+        color = generate_color(user_id);
+        
+        poly = new google.maps.Polygon({
+                strokeWeight: 3,
+                fillColor: color,
+                clickable:false
+        });
+        
+        poly.setMap(map);
+        
+        poly.setPaths(new google.maps.MVCArray([path]));
+        
+        polygons.push(poly);
+        
+        return polygons;
+}
+
+// calcolo il pan e zoom ottimale per visualizzare un poligono 
+function setOptimalPanEZoom(polygon, map) {
+        path = polygon.getPaths().getAt(0);
+
+        var bounds = new google.maps.LatLngBounds();
+        for (i = 0; i < path.length; i++) 
+                bounds.extend(path.getAt(i));
+        console.log(bounds);    
+        map.fitBounds( bounds );
+       
+        return bounds;
+}
+
+
+// creazione dell'infobubble degli EDIFICI nell'INDEX + listener
+function create_infoBubble(myLatlng, nome, link, foto, map, poligono) {
+        
+        var marker = new google.maps.Marker({
+                position: myLatlng,
+                map: map,
+                title:nome
+        });
+            
+            
+        var message_first = '<div style="text-align:center"><br>';
+        
+        message_first += '<a href="'+link+'">'+nome+'<\/a><br><br>'
+        message_first += '<img src='+ foto +' height=100 >';
+        message_first += '</div>';
+        
+        var infoBubble = new InfoBubble({
+                maxWidth: 300,
+                minWidth: 100,
+                maxHeight: 200,
+                minHeight: 100,
+                hideCloseButton: false,
+                content: message_first
+        });
+            
+        currentInfoBubble = infoBubble;
+        
+        google.maps.event.addListener(marker, 'click', function() {
+                currentInfoBubble.close();
+                infoBubble.open(map,marker);
+                currentInfoBubble = infoBubble;
+                setOptimalPanEZoom(poligono, map);
+        });
+        
+        return infoBubble;
+}
 

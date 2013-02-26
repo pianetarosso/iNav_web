@@ -15,5 +15,8 @@ def constants(request):
                 'MIN_GEOMETRY_LENGTH'   :       settings.MIN_GEOMETRY_LENGTH,
                 
                 # Dimensione massima delle immagini in input (Mb)
-                'MAX_IMAGE_SIZE'        :       settings.MAX_IMAGE_SIZE
+                'MAX_IMAGE_SIZE'        :       settings.MAX_IMAGE_SIZE,
+                
+                # Chiave Google Maps
+                'G_MAPS'                :      settings.G_MAPS
                 }
