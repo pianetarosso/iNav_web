@@ -43,7 +43,7 @@ class StepOneForm(ModelForm):
         # verifico che il nome sia effettivamente unico
         def clean_nome(self):
                 
-                nome = self.cleaned_data['nome']
+                nome = self.cleaned_data.get('nome')
                 if nome == None or nome == '':
                         raise forms.ValidationError("Name missing or not valid!!!")
                 return nome                 
@@ -51,7 +51,7 @@ class StepOneForm(ModelForm):
         # verifico che l'immagine sia leggibile e la sua dimensione non superi i 3 Mb                
         def clean_foto(self):
                         
-                image = self.cleaned_data['foto']
+                image = self.cleaned_data.get('foto')
                         
                 if image:
                         if image._size > MAX_IMAGE_SIZE:
@@ -175,25 +175,41 @@ class StepThreeForm(ModelForm):
                         'posizione_immagine', 
                 )
                 
-# FromSet per verificare le immagini e i numeri di piano             
+                # verifico che l'immagine sia leggibile e la sua dimensione non superi i 3 Mb                
+                def clean_immagine(self):
+                        print "IMMAGINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                        image = self.cleaned_data.get('immagine')
+                        
+                        if image:
+                                if image._size > MAX_IMAGE_SIZE:
+                                        raise ValidationError("Image file too large ( maximum 3 Mb )")
+                                return image
+                        else:
+                                raise ValidationError("Couldn't read uploaded image")
+                
+                
+                
+# FromSet per verificare i numeri di piano             
 class StepThreeFormSet(BaseFormSet):
 
         def clean(self):
+                
                 if any(self.errors):
+                        print str(self.errors)
                         # Don't bother validating the formset unless each form is valid on its own
                         return
           
                 numero_di_piani = []
       
-               # for i in range(0, self.total_form_count()):
-                #        form = self.forms[i]
-          
-                 #       numero_di_piano = form.cleaned_data.get('numero_di_piano',None)
+                for i in range(0, self.total_form_count()):
+                        form = self.forms[i]
+                        print str(form)
+                        numero_di_piano = form.cleaned_data.get('numero_di_piano',None)
            
-                  #      if numero_di_piano in numero_di_piani:
-                   #             raise forms.ValidationError("Floors must have different floor numbers.")
+                        if numero_di_piano in numero_di_piani:
+                                raise forms.ValidationError("Floors must have different floor numbers.")
                                 
-                    #    numero_di_piani.append(numero_di_piano)
+                        numero_di_piani.append(numero_di_piano)
                 return self             
 
 

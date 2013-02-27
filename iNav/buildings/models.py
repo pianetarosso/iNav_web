@@ -79,7 +79,7 @@ class Floor(models.Model):
         # creazione del percorso per il salvataggio delle foto dei piani
         def content_file_name(instance, filename):
 
-                nome_piano = 'floor_' + str(numero_di_piano)
+                nome_piano = 'floor_' + str(instance.numero_di_piano)
                 
                 return '/'.join(['buildings', 
                         str(instance.building.utente.pk), 

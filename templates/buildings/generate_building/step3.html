@@ -16,82 +16,21 @@ src="{{STATIC_URL}}java/generate/map.step3.floorManagement.js">
                 enableDelete();
                 addOnChange();
         }
-        
-        // aggiungo ad ogni campo di input di testo un ascoltatore sull'editing
-        function addOnChange() {
-                input = document.getElementById("form").getElementsByTagName("input");
-                
-                for (i=0; i < input.length -1; i++) {
-                        if (input[i].getAttribute("type") == 'text') {
-                                input[i].oninput = function() {
-                                        testFloorNumber(this);
-                                };
-                                testFloorNumber(input[i]);
-                         }
-                }
-        }
-        
-        // funzione che ha il compito di testare il numero di piano immesso
-        function testFloorNumber(element) {
-                
-                button_next = document.getElementById("next");
-                
-                if (isValid(element)) {
-                        element.style.borderColor = "";
-                        button_next.disabled = false;
-                }
-                else {
-                        element.style.borderColor = "#ff0000";
-                        button_next.disabled = true; // NON FUNZIONA (OVVIAMENTE!!!)
-                        // MANCA ANCHE LA VALIDAZIONE SE ELIMINO UN CAMPO CON LO STESSO VALORE DI UN ALTRO
-                }     
-        }       
-        
-        function isValid(element) {
-        
-                // piani massimo e minimo
-                max = 50;
-                min = -10;
-                
-                
-                value = parseInt(element.value);
-                if (isNaN(value))
-                        return false;
-        
-                if ((value > max) || (value < min))
-                        return false;
-                console.log("test");
-                input = document.getElementById("form").getElementsByTagName("input");
-                
-                // contatore, visto che passiamo anche lui stesso
-                errors = 0;
-                
-                for (i=0; i < input.length -1; i++) {
-                        if (input[i].getAttribute("type") == 'text') {
-                                t_value = parseInt(input[i].value); 
-                                
-                                if ((!isNaN(t_value)) && (t_value == value))
-                                        errors++;
-                                
-                                if (errors > 1)
-                                        return false;
-                        }
-                }
-                return true;
-        }
-        
-       
+ 
 </script>
 
 
 <body onload="initialize()">
 
-        <p>Now you have to insert some data about the floors that you want to map!</p>
+        <p>Now you have to insert some data about the floors that you want to map.</p>
+        <p>You can insert not more of {{ MAX_FLOORS }} floors!</p>
         </br>
 
-        <form enctype="multipart/form-data" action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
-
-            
+        <form enctype="multipart/form-data" action="{% url buildings.views.generate_building idb=building %}" method="post">
+        {% csrf_token %}
+        
+                    {{ formset.management_form }}
+                       
                     {% for form in formset %}   
                             <div id="form">   
                                     <div class="fieldWrapper">

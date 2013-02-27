@@ -253,34 +253,42 @@ def generate_building(request, idb):
                 #       - descrizione
                 elif building.versione == 3:
                 
+                        # costruisco la formset
+                        FormSet = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
+                        
+                        
                         # caso di ritorno con i dati della form
                         if request.method == 'POST':
-                        
+                                
                                 # recupero i dati della form dal post
-                                form = StepThreeForm(request.POST, request.FILES)
+                                form = FormSet(request.POST, request.FILES)
                                 
                                 if form.is_valid():
                 
-                                        print str(form)
-                                        #building = form.save(commit=False)
-                                       
-                                        #building.data_update = datetime.datetime.now()
+                                        for f in form.forms:
+                                                
+                                                floor = f.save(commit=False)
+                                                floor.building = building 
                                         
-                                        #building.versione = 4
+                                                floor.save()                                         
+                                       
+                                        building.data_update = datetime.datetime.now()
+                                        
+                                        building.versione = 4
                                         
                                         # aggiorno l'edificio
-                                        #building.save()
+                                        building.save()
                                         
                                         # richiamo la stessa pagina, la logica dietro farà tutto il resto
-                                        #return redirect('buildings.views.generate_building', idb=b_id)
+                                        return redirect('buildings.views.generate_building', idb=b_id)
                                       
                                 else:
                                         # la form non è valida, per cui la rispedisco al mittente
-                                        session['form'] = form
+                                        session['formset'] = form
                                           
                         else:
                                 # costruisco una formset vuota e la passo all'utente
-                                form = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
+                                form = FormSet()
                                 
                                 session['formset'] = form 
                                 
