@@ -4,7 +4,7 @@
         
         
         <script type="text/javascript"
-        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg&sensor=false&libraries=geometry">
+        src="http://maps.googleapis.com/maps/api/js?key={{G_MAPS}}&sensor=false&libraries=geometry">
         </script>
         
         <script type="text/javascript" 
@@ -16,7 +16,11 @@
        </script>
        
        <script type="text/javascript" 
-       src="{{STATIC_URL}}java/map.generatePolygon.js"> 
+       src="{{STATIC_URL}}java/generate/map.step2.drawBuilding.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/generate/map.step2.setHTMLvalues.js"> 
        </script>
        
         
@@ -33,20 +37,15 @@
         // mappa
         var map;
         
-        
-
+ 
         // chiamata al loading della pagina
         function initialize() {
                 
                 // imposto la voce del menù di navigazione
                 changeLinkColor("new_building");
                 
-                // imposto l'id dell'utente
-                id = {{ request.user.id }}
-                
                 // carico i valori di controllo della dimensione del poligono
-                initializeGeometryLimits({{ MAX_GEOMETRY_AREA }}, {{ MIN_GEOMETRY_AREA }}, 
-                        {{ MAX_GEOMETRY_LENGTH }}, {{ MIN_GEOMETRY_LENGTH }});
+                initializeGeometryLimits({{ MAX_GEOMETRY_AREA }}, {{ MIN_GEOMETRY_AREA }}, {{ MAX_GEOMETRY_LENGTH }}, {{ MIN_GEOMETRY_LENGTH }});
                 
                 // carico la mappa
                 loadMap();
@@ -58,11 +57,61 @@
                 initializeJS(map, polygons);
                 
                 // abilito il disegno dell'edificio da parte dell'utente
-                polygons = disegna_edificio(polygons, id); 
+                disegna_edificio(polygons, {{ request.user.id }});  
                 
+                // verifico se per caso sono già presenti dati dalla form
+                formYetWrote();
         }
 
         
+        // funzione per verificare se sono presenti dati nella form, leggerli e caricarli
+        function formYetWrote() {
+        
+                // parsing della stringa del poligono
+                geometria = document.getElementById('id_geometria').value;
+                
+                if (geometria == '')
+                        return;
+                        
+                s = geometria.indexOf('((') + 2;
+                e = geometria.indexOf('))');
+                
+                geometria = geometria.substring(s, e);
+                
+                temp = geometria.split(',');
+                var out = []
+                
+                for (t in temp) {
+                        
+                        coord = temp[t].split(' ');
+                        latitude = null;
+                        longitude = null;
+                        
+                        for (c in coord) {
+                                
+                                coordinata = parseFloat(coord[c]);
+                               
+                                if ((latitude == null) && !isNaN(coordinata))
+                                        latitude = coordinata
+                                else if ((longitude == null) && !isNaN(coordinata))
+                                        longitude = coordinata
+                        }
+                        latLng = new google.maps.LatLng(longitude, latitude);
+                        
+                        out.push(latLng);
+                }
+                
+                // costruito l'array "out" dei punti, provvedo a passarli alla funzione di disegno
+                // poi imposto il pan e zoom ottimali per il poligono
+                for (o in out) 
+                        setUserPolygonPoints(out[o]);
+                        
+                       var bounds = new google.maps.LatLngBounds();
+                        for (i = 0; i < path.length; i++) 
+                                bounds.extend(path.getAt(i));
+            
+                        map.fitBounds( bounds );
+        }
 
         // Caricamento della mappa
         function loadMap() {
@@ -101,6 +150,7 @@
     value="Write an address here!" onfocus="inputFocus(this)" onblur="inputBlur(this)" />
       <input type="button" value="Find!" onclick="codeAddress()">
       
+      <input type="button" value="Clear!" onclick="clearUserPolygon()" id="delete" hidden="true">
     <div id="map_canvas"></div>
 
 </body>
@@ -123,9 +173,9 @@
         <li>Be careful and accurate!</li>
         </ul>
         
+        <form action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
+                {{ form.as_p }}
+        <input type="submit" value="Next step" id ='submit' disabled='true'>
         
 {% endblock extra_body %}  
-
-
-
 

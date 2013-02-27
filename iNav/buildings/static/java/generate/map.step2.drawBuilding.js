@@ -57,6 +57,8 @@ function clearUserPolygon() {
         path.clear();
         updateInputFields(null);
         
+        setAddressInputFields(null);
+        
         enableNextButton();
 }
 
@@ -78,10 +80,10 @@ function setUserPolygonPoints(latLng) {
         if (path.length == 0) {
                 map.panTo(latLng);
                 map.setZoom(17);
+                
+                setAddressInputFields(latLng);
         }
        
-        testPoint(latLng);
-        
         path.insertAt(path.length, latLng);
         
        
@@ -141,9 +143,6 @@ function setUserPolygonPoints(latLng) {
         }        
 }
 
-// verifico se il punto 
-testPoint(latLng)
-
 // Verifico se le misure di distanza e area tra i vari punti sono al di sotto
 // di un valore massimo che identifico
 function testMeasures(path) {
@@ -178,7 +177,7 @@ function testMeasures(path) {
         
         if (path.length > 2) {
                 area_m = google.maps.geometry.spherical.computeArea(path);
-                
+                console.log(area_m);
                 if (area_m >= max_area) {
                         alert(message_too_big);
                         return false;  
@@ -188,3 +187,68 @@ function testMeasures(path) {
         return true;
 }
 
+
+
+/*
+
+
+CODICE INCOMPLETO PER VERIFICARE SE CI SONO INTERSEZIONI TRA I POLIGONI
+// verifico che tutte le rette siano fuori dagli altri edifici
+function testLines(test, deleted) {
+
+        // non si tratta di una cancellazione
+        if (deleted == null) {
+                point_A = test.getAt(0);
+                
+                if (test.length > 2)
+                        point_B = test.getAt(test.length - 2);
+                else
+                        point_B = test.getAt(test.length - 1);
+                        
+                point_C = point_B = test.getAt(test.length - 1);
+                
+                // la struttura è B-C-A
+                
+                
+        
+        
+        
+        }
+
+
+}
+
+
+
+// verifico se il punto è all'interno di un altro edificio
+function testPoint(point) {
+        
+        for (n in nearest) {
+        
+                bounds = nearest[n][1];
+                
+                if ((bounds != null) && (bounds.contains(point)))
+                        return true
+        }        
+
+        return false;
+}
+
+
+// seleziono tra tutti i poligoni quelli più vicini al centro dell'edificio, e per ognuno ne calcolo i bounds
+function calculateNearest(center) {
+
+        max_distance_from_center = (max_area / min_length) * 2;
+        
+        nearest = [];
+        
+        for (p in polygons) {
+                distance = google.maps.geometry.spherical.computeDistanceBetween (center, p.getAt(0));
+                
+                if (distance < max_distance_from_center)
+                       nearest.put([p, calculateBounds(p)]); 
+        }
+        
+        return nearest;
+}
+*/

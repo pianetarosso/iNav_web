@@ -10,6 +10,7 @@ from django.forms.formsets import *
 from PIL import Image
 from django.conf import settings
 
+from django.contrib.gis.geos import LineString
 
 
 
@@ -82,54 +83,75 @@ class StepTwoForm(ModelForm):
                         'foto'
                 )
                 
-                widgets = {
-                        'geometria'     : HiddenInput(),
-                        'posizione'     : HiddenInput(),
-                        'nazione'       : HiddenInput(),
-                        'citta'         : HiddenInput()
-                }  
+               # widgets = {
+               #         'geometria'     : HiddenInput(),
+               #         'posizione'     : HiddenInput(),
+               #         'nazione'       : HiddenInput(),
+               #         'citta'         : HiddenInput()
+               # }  
                 
         # verifico alcuni campi della geometria 
         def clean_geometria(self):
         
-                data = self.cleaned_data['geometria']
+                data = self.cleaned_data.get('geometria')
                 
                 # verifico che la geometria non sia sovrapposta ad altre
                 if Building.objects.filter(geometria__intersects=data, pronto=True):
                         raise forms.ValidationError("You cannot draw over another Building!!!")
-                
+               
+                # converto il valore dell'area in un altro leggibile (m^2), tramite la proiezione EPSG
+                # (3003 vale per l'Italia, e dà risultati abbastanza buoni...)
+                new_geom = data.clone()
+                new_geom.transform(3003)
+                area = new_geom.area
+               
+                print str(area)
                 # verifico che l'area sia inferiore al valore massimo (in m^2)        
-                if data.area.sq_m > MAX_GEOMETRY_VOLUME: # m^2
+                if area > settings.MAX_GEOMETRY_AREA: # m^2
                         raise forms.ValidationError("Your building is too big!!!")
-                        
+                     
                 # verifico che l'area sia maggiore del valore minimo (in m^2)        
-                if data.area.sq_m < MIN_GEOMETRY_VOLUME: # m^2
+                if area < settings.MIN_GEOMETRY_AREA: # m^2
                         raise forms.ValidationError("Your building is too small!!!")
                         
                 
-                        
+                   
                 # verifico che la lunghezza di ogni lato della geometria sia compatibile con
                 # i valori massimi e minimi (in metri)
-                for l in data.length:
-                       if l.m > MAX_GEOMETRY_LENGTH: 
+                old = None
+                lines = []
+                
+                for p in new_geom[0]:
+                        
+                        if old != None:
+                                lines.append(LineString(old, p))
+                                
+                        old = p
+                
+                for l in lines:
+                        
+                        if l.length > settings.MAX_GEOMETRY_LENGTH: 
                                 raise forms.ValidationError("Your building is too big!!!")
                                 
-                       if l.m < MIN_GEOMETRY_LENGTH: 
+                        if l.length < settings.MIN_GEOMETRY_LENGTH: 
                                 raise forms.ValidationError("Your building is too small!!!")
-                                
+                               
                 return data
                 
         
         # verifico che la "posizione" sia all'interno della "geometria"
-        def clean_posizione(self):
+        def clean(self):
                 
-                data = self.cleaned_data['posizione']
-                data_g = self.cleaned_data['geometria']
+                cleaned_data = super(StepTwoForm, self).clean()
                 
-                if not data_g.contains(data):
-                        raise forms.ValidationError("Point is not inside geometry!!!")   
+                data = cleaned_data.get('posizione')
+                data_g = cleaned_data.get('geometria')
                 
-                 
+                if data and data_g:
+                        if not data_g.contains(data):
+                                raise forms.ValidationError("Point is not inside geometry!!!")   
+                
+                return cleaned_data 
 
 #########################################################################################################
 

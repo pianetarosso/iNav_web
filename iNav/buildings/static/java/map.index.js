@@ -79,12 +79,13 @@ function setPolygonOnMap(polygons, user_id) {
 
 // calcolo il pan e zoom ottimale per visualizzare un poligono 
 function setOptimalPanEZoom(polygon, map) {
+
         path = polygon.getPaths().getAt(0);
 
         var bounds = new google.maps.LatLngBounds();
         for (i = 0; i < path.length; i++) 
                 bounds.extend(path.getAt(i));
-        console.log(bounds);    
+            
         map.fitBounds( bounds );
        
         return bounds;

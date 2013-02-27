@@ -26,15 +26,30 @@ function updateInputFields(path) {
 
 // funzione chiamata dal pulsante "next" della pagina per fare il reverse geocoding 
 // al momento del salvataggio 
-function setAddressInputFields() {
-        // trovo la nazione e la città del centro del poligono
-        reverseGeocoder(center, setAddress);   
+function setAddressInputFields(position) {
+
+        if (position != null)
+                // trovo la nazione e la città del centro del poligono
+                reverseGeocoder(position, setAddress); 
+        else
+                setAddress(null);  
 }
 
 
 // funzione per estrapolare i valori di città e nazione dal reverse geocoding e aggiorna i campi NAZIONE e CITTÀ
 function setAddress(address) {
-                
+           
+        
+        var nazioneF = document.getElementById('id_nazione');
+        var cittàF = document.getElementById('id_citta');
+        
+           
+        if (address == null) {
+                nazioneF.value = '';
+                cittàF.value = '';
+                return;
+        }     
+        
         var address_components =  address[0].address_components;
         
         var città = '';
@@ -67,9 +82,6 @@ function setAddress(address) {
         
         
         // imposto i valori nei campi della pagina
-        var nazioneF = document.getElementById('id_nazione');
-        var cittàF = document.getElementById('id_citta')
-        
         nazioneF.value = nazione;
         cittàF.value = città;
         
@@ -110,6 +122,13 @@ function buildPolygon(path) {
 // calcolo il centro del poligono
 function calculateCenter(path) {
 
+        bounds = calculateBounds(path);
+        return bounds.getCenter();
+}
+
+// funzione per calcolare i bounds di un poligono
+function calculateBounds(path) {
+
         var bounds = new google.maps.LatLngBounds();
         var polygonCoords = [];
         for(var i=0; i < path.length; i++) 
@@ -118,6 +137,6 @@ function calculateCenter(path) {
         for (i = 0; i < polygonCoords.length; i++) 
                 bounds.extend(polygonCoords[i]);
         
-        return bounds.getCenter()
+        return bounds;
 }
 

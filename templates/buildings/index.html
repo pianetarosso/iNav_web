@@ -3,7 +3,7 @@
 {% block imports %} 
         
         <script type="text/javascript"
-        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg&sensor=false">
+        src="http://maps.googleapis.com/maps/api/js?key={{G_MAPS}}&sensor=false">
         </script>
         
         <script type="text/javascript"
@@ -36,18 +36,27 @@ function initialize() {
         
         
         {% if buildings %}
+        
                 var infobubbles = new Array();
                 var counter = 0;
+                polygons = new google.maps.MVCArray();
+                
                 {% for building in buildings %}
-                        var lat = parseFloat("{{building.posizione.y}}");
-                        var lng = parseFloat("{{building.posizione.x}}");
-                        var myLatlng = new google.maps.LatLng(lat, lng);
-
-                        infobubble =  create_infoBubble(myLatlng, 
+                        
+                        // creo l'array dei poligoni
+                        polygons = parseJSONPolyline({{building.geometria.geojson|safe}}, {{building.utente.id}}, polygons, map);
+                        console.log(polygons)
+                        console.log(polygons.getAt(polygons.length - 1))
+                        var myLatlng = new google.maps.LatLng({{building.posizione.y}}, {{building.posizione.x}});
+                        
+                        infobubble =  create_infoBubble(
+                                        myLatlng, 
                                         "{{building.nome}}",
                                         "{% url buildings.views.detail building.id %}", 
                                         "{{MEDIA_URL}}{{building.foto}}", 
-                                        map
+                                        map,
+                                        // passo il poligono appena creato
+                                        polygons.getAt(polygons.length - 1)
                                 );
                         google.maps.event.addListener(map, 'click', function() {
                                 infobubble.close();
