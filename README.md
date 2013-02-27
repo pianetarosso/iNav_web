@@ -9,6 +9,15 @@ This project is still in alpha.
 
 In this version you can find:
 
-# Wizard to create a building, with bearing management for each floor, geolocalization of the building and creation af path and RFID markers on the map.
+ - Wizard to create a building:
+        
+        + bearing management for each floor;
+        + geolocalization of the building; 
+        + creation af paths and RFID markers for every floor
+        
 
-# Sharing of the maps with an Android client
+ - Connection with a custom Android client:
+ 
+        + search of the building based on position and distance;
+        + download of buildings
+        + automatic update based on building version

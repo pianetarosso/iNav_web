@@ -1,6 +1,7 @@
 *.log
 *.jpg
 *.jpeg
+*.png
 *.pot
 *.pyc
 *.JPG
