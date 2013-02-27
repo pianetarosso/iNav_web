@@ -91,7 +91,6 @@ class Floor(models.Model):
         
         # dati vari del piano   
         numero_di_piano = models.IntegerField()
-        descrizione = models.TextField(max_length=1000, blank=True)
         bearing = models.DecimalField(max_digits=6, decimal_places=2, null=True)
         immagine = ImageField(upload_to=content_file_name)
             

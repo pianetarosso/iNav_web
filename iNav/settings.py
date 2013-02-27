@@ -228,9 +228,12 @@ MIN_GEOMETRY_LENGTH = 2
 # Dimensione massima delle immagini in input (Mb)
 MAX_IMAGE_SIZE = 3 * 1024 * 1024
 
+# Numero massimo di piani mappabili
+MAX_FLOORS = 6
+
 # Chiave GooGle Maps
 G_MAPS = "AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg"
                 
-                
+ 
                 
                 

@@ -282,7 +282,7 @@ def generate_building(request, idb):
                                 # costruisco una formset vuota e la passo all'utente
                                 form = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
                                 
-                                session['form'] = form 
+                                session['formset'] = form 
                                 
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step3.html', session,  context_instance = RequestContext(request))

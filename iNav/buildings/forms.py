@@ -162,7 +162,6 @@ class StepTwoForm(ModelForm):
 # STEP 3
 #       - immagine
 #       - numero_di_piano
-#       - descrizione 
 
 class StepThreeForm(ModelForm):
         class Meta:

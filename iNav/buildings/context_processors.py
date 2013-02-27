@@ -17,6 +17,9 @@ def constants(request):
                 # Dimensione massima delle immagini in input (Mb)
                 'MAX_IMAGE_SIZE'        :       settings.MAX_IMAGE_SIZE,
                 
+                # Numero massimo di piani mappabili in un colpo
+                'MAX_FLOORS'            :       settings.MAX_FLOORS,
+                
                 # Chiave Google Maps
                 'G_MAPS'                :      settings.G_MAPS
                 }
