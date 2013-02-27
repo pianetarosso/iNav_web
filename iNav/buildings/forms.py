@@ -83,12 +83,12 @@ class StepTwoForm(ModelForm):
                         'foto'
                 )
                 
-               # widgets = {
-               #         'geometria'     : HiddenInput(),
-               #         'posizione'     : HiddenInput(),
-               #         'nazione'       : HiddenInput(),
-               #         'citta'         : HiddenInput()
-               # }  
+                widgets = {
+                        'geometria'     : HiddenInput(),
+                        'posizione'     : HiddenInput(),
+                        'nazione'       : HiddenInput(),
+                        'citta'         : HiddenInput()
+                }  
                 
         # verifico alcuni campi della geometria 
         def clean_geometria(self):
@@ -142,6 +142,10 @@ class StepTwoForm(ModelForm):
         # verifico che la "posizione" sia all'interno della "geometria"
         def clean(self):
                 
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+                        
                 cleaned_data = super(StepTwoForm, self).clean()
                 
                 data = cleaned_data.get('posizione')
@@ -152,6 +156,47 @@ class StepTwoForm(ModelForm):
                                 raise forms.ValidationError("Point is not inside geometry!!!")   
                 
                 return cleaned_data 
+
+
+
+# STEP 3
+#       - immagine
+#       - numero_di_piano
+#       - descrizione 
+
+class StepThreeForm(ModelForm):
+        class Meta:
+        
+                model = Floor
+                
+                exclude = (
+                        'building', 
+                        'bearing', 
+                        'zoom_on_map', 
+                        'posizione_immagine', 
+                )
+                
+# FromSet per verificare le immagini e i numeri di piano             
+class StepThreeFormSet(BaseFormSet):
+
+        def clean(self):
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+          
+                numero_di_piani = []
+      
+               # for i in range(0, self.total_form_count()):
+                #        form = self.forms[i]
+          
+                 #       numero_di_piano = form.cleaned_data.get('numero_di_piano',None)
+           
+                  #      if numero_di_piano in numero_di_piani:
+                   #             raise forms.ValidationError("Floors must have different floor numbers.")
+                                
+                    #    numero_di_piani.append(numero_di_piano)
+                return self             
+
 
 #########################################################################################################
 

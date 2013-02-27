@@ -150,7 +150,11 @@ def generate_building(request, idb):
                 if building.pronto:
                         return redirect('buildings.views.detail', building_id=b_id)
                         
+                
+                # l'id dell'edificio (se presente) mi servirà per i link dei POST nelle varie form
+                session['building'] = b_id
                         
+                               
                 # verifico il punto del wizard in cui mi trovo (da 1 a 5)
                 
                 # STEP 1: ################################################################################à
@@ -188,9 +192,6 @@ def generate_building(request, idb):
                                 # costruisco una form vuota e la passo all'utente
                                 form = StepOneForm()
                                 session['form'] = form 
-                        
-                        # importo l'id dell'edificio
-                        session['building'] = b_id
                         
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step1.html', session,  context_instance = RequestContext(request))
@@ -239,23 +240,53 @@ def generate_building(request, idb):
                         # aggiungo alla sessione tutti gli edifici pronti       
                         session['buildings'] = Building.objects.filter(pronto=True)
                         
-                        # importo l'id dell'edificio
-                        session['building'] = b_id
-                        
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step2.html', session,  context_instance = RequestContext(request))
-                
-              
-                
-                
-                
-                
-                
-                
+                       
                 # END STEP 2 #
                 #########################################################################################
    
    
+                # STEP 3: ################################################################################à
+                #       - numero_di_piano
+                #       - immagine
+                #       - descrizione
+                elif building.versione == 3:
+                
+                        # caso di ritorno con i dati della form
+                        if request.method == 'POST':
+                        
+                                # recupero i dati della form dal post
+                                form = StepThreeForm(request.POST, request.FILES)
+                                
+                                if form.is_valid():
+                
+                                        print str(form)
+                                        #building = form.save(commit=False)
+                                       
+                                        #building.data_update = datetime.datetime.now()
+                                        
+                                        #building.versione = 4
+                                        
+                                        # aggiorno l'edificio
+                                        #building.save()
+                                        
+                                        # richiamo la stessa pagina, la logica dietro farà tutto il resto
+                                        #return redirect('buildings.views.generate_building', idb=b_id)
+                                      
+                                else:
+                                        # la form non è valida, per cui la rispedisco al mittente
+                                        session['form'] = form
+                                          
+                        else:
+                                # costruisco una formset vuota e la passo all'utente
+                                form = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
+                                
+                                session['form'] = form 
+                                
+                        # restituisco il template
+                        return render_to_response('buildings/generate_building/step3.html', session,  context_instance = RequestContext(request))
+                        
    
    
 
