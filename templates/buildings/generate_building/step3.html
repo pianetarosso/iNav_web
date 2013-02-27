@@ -1,0 +1,55 @@
+{% extends "base.html" %} 
+
+
+
+
+{% block body %}
+<script>
+        
+</script>
+
+
+<body onload='changeLinkColor("new_building")'>
+
+        <p>Now you have to insert some data about the floors that you want to map!</p>
+
+        <form enctype="multipart/form-data" action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
+
+            <div id="baseForm">
+            
+                        {{ form.as_p }}
+                        
+                        {{ form.non_field_errors }}
+                    <div class="fieldWrapper">
+                        {{ form.nome.errors }}
+                        
+                        <label for="id_nome">Name*:</label></br>
+                        {{ form.nome }}
+                    </div> </br>
+                    
+                    <div class="fieldWrapper">
+                        {{ form.descrizione.errors }}
+                        
+                        <label for="id_nome">Description:</label></br>
+                        {{ form.descrizione }}
+                    </div> </br>
+                    
+                    <div class="fieldWrapper" style="cols:20;">
+                        {{ form.link.errors }}
+                        
+                        <label for="id_nome">Link:</label></br>
+                        {{ form.link }}
+                    </div> </br>
+                    
+                    <div class="fieldWrapper">
+                        {{ form.foto.errors }}
+                        <label for="id_foto">Insert a photo (optional):</label></br>
+                        {{ form.foto }}
+                    </div></br>
+           
+                </div>
+                
+            <p><input type="submit" value="Next Step"/></p>
+        </form>
+</body>
+{%endblock body %}
