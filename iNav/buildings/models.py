@@ -55,6 +55,8 @@ class Building(models.Model):
         # Necessario per le geoquery
         objects = models.GeoManager() 
         
+        # declinazione magnetica di base dell'edificio (rispetto al nord di google)
+        base_bearing = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
         
         # Dati sulla posizione (usati nella ricerca)
         nazione = models.CharField(max_length=30, blank=True)

@@ -55,9 +55,8 @@
                 setAndBlockPolygon(polygons.getAt(0), map);
                 
                 // calcolo la declinazione magnetica della posizione
-                declinazione = getDeclination({{lat}}, {{lng}});
+                alert({{declinazione}});
                 
-                console.log(declinazione);
         }
 
         
@@ -77,7 +76,7 @@
                 
                 map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);      
         }
-
+        
         // funzione per ricavare la declinazione del luogo in base alle coordinate
         function getDeclination(latitude, longitude) {
 
@@ -88,8 +87,8 @@
 	        url += '&'
 	        url += 'lon1=' + longitude;
 	        url += '&';
-	        url += 'resultFormat=xml&callback=';
-
+	        url += 'resultFormat=xml';
+/*
 	        var xmlHttp = null;
 	        xmlHttp = new XMLHttpRequest();
 	        xmlHttp.open( "GET", url, false );
@@ -104,6 +103,14 @@
 	        string = string.substring(1, string.length - 2);
 
 	        return parseFloat(string);
+	        */
+	        $.ajax({
+        url: url,
+        success: function(data){
+            var declination = parseFloat($(data).find("declination").text());
+            alert(declination);
+        }
+    });
         }
 
 </script>

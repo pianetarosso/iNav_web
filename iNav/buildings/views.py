@@ -222,6 +222,9 @@ def generate_building(request, idb):
                                        
                                         building.data_update = datetime.datetime.now()
                                         
+                                        # scarico i dati del bearing dal server esterno
+                                        building.base_bearing = retrieveDeclination(building.posizione.y, building.posizione.x)
+                                        
                                         building.versione = 3
                                         
                                         # aggiorno l'edificio
@@ -348,9 +351,10 @@ def generate_building(request, idb):
                                 
                                 #session['formset'] = form 
                                 
+                                 
                                 session['geometria'] = building.geometria  
-                                session['lat'] = building.posizione.y
-                                session['lng'] = building.posizione.x      
+                                session['declinazione'] = building.base_bearing
+                                      
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step4.html', session,  context_instance = RequestContext(request))
    
@@ -998,6 +1002,63 @@ def setBearingimage(request, width, idf, id_b):
          
 ############################################################################################
 
+# FUNZIONE PER RECUPERARE LA DECLINAZIONE MAGNETICA DELLA LOCALITÀ
+
+import urllib2 
+from xml.dom.minidom import parseString
+
+# costruisco l'url
+def buildUrl(latitude, longitude):
+        return settings.MAGNETIC_URL + '?' + 'lat1=' + str(latitude) + '&' + 'lon1=' + str(longitude) + '&' + 'resultFormat=xml'
+        
+        
+# recupero la pagina dall'indirizzo       
+def retrieveWeb(address):
+        
+        try:                 
+                web_handle = urllib2.urlopen(address)
+                         
+        except urllib2.HTTPError, e: 
+                error_desc = BaseHTTPServer.BaseHTTPRequestHandler.responses[e.code][0] 
+                print "Cannot retrieve URL: HTTP Error Code", e.code, "Error: ", error_desc 
+                sys.exit(1)         
+        except urllib2.URLError, e: 
+                print "Cannot retrieve URL: " + e.reason[1] 
+                sys.exit(1)         
+        except:                 
+                print "Cannot retrieve URL: unknown error"                 
+                sys.exit(1) 
+                
+        return web_handle  
+
+
+# funzione principale per il recupero della declinazione
+def retrieveDeclination(lat, lng):
+
+        # costruisco l'indirizzo
+        address = buildUrl(lat, lng) 
+       
+        # recupero la pagina
+        page = retrieveWeb(address)
+        
+        # recupero l'xml
+        xml = page.read()  
+        
+        page.close()
+        
+        # inizio il parsin
+        dom = parseString(xml)
+        
+        #retrieve the first xml tag (<tag>data</tag>) that the parser finds with name tagName:
+        xmlTag = dom.getElementsByTagName('declination')[0].toxml()
+        
+        #strip off the tag (<tag>data</tag>  --->   data):
+        xmlData=xmlTag.replace('<declination>','').replace('</declination>','')
+        
+        print "DECLINATION: " + xmlData
+        
+        return float(xmlData)
+      
 ############################################################################################
 
 ############################################################################################
