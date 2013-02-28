@@ -91,6 +91,36 @@ function setOptimalPanEZoom(polygon, map) {
         return bounds;
 }
 
+// funzione per limitare il movimento dell'utente sulla mappa
+function blockMapMovement(bounds) {
+                
+        var lastValidCenter = map.getCenter();
+
+        google.maps.event.addListener(map, 'center_changed', function() {
+                if (bounds.contains(map.getCenter())) {
+                
+                        // still within valid bounds, so save the last valid position
+                        lastValidCenter = map.getCenter();
+                        return; 
+                }
+
+                // not valid anymore => return to last valid position
+                map.panTo(lastValidCenter);
+        });
+}
+        
+        
+
+// funzione per centrare un poligono nella mappa ed eliminare la possibilità di movimento
+// (consigliabile settare l'opzione "minZoom:16" della mappa per limitare la possibilità di zoom)
+function setAndBlockPolygon(polygon, map) {
+
+        var bounds = setOptimalPanEZoom(polygon, map);
+        blockMapMovement(bounds);
+}
+
+
+
 
 // creazione dell'infobubble degli EDIFICI nell'INDEX + listener
 function create_infoBubble(myLatlng, nome, link, foto, map, poligono) {

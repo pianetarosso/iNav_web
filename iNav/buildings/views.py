@@ -32,7 +32,6 @@ from buildings.forms import *
 
 
 
-
 ############################################################################################
 MAX_TEMPORARY_BUILDINGS = 3
 
@@ -157,7 +156,9 @@ def generate_building(request, idb):
                                
                 # verifico il punto del wizard in cui mi trovo (da 1 a 5)
                 
-                # STEP 1: ################################################################################à
+                # STEP 1: ################################################################################
+                #
+                # BUILDING
                 #       - Nome edificio
                 #       - Descrizione
                 #       - Link
@@ -200,7 +201,9 @@ def generate_building(request, idb):
                 #########################################################################################
                 
                 
-                # STEP 2: ################################################################################à
+                # STEP 2: ################################################################################
+                #
+                # BUILDING
                 #       - posizione
                 #       - geometria
                 #       - nazione
@@ -247,10 +250,11 @@ def generate_building(request, idb):
                 #########################################################################################
    
    
-                # STEP 3: ################################################################################à
+                # STEP 3: ################################################################################
+                #
+                # FLOOR
                 #       - numero_di_piano
                 #       - immagine
-                #       - descrizione
                 elif building.versione == 3:
                 
                         # costruisco la formset
@@ -272,11 +276,9 @@ def generate_building(request, idb):
                                         
                                                 floor.save()                                         
                                        
-                                        building.data_update = datetime.datetime.now()
-                                        
-                                        building.versione = 4
-                                        
                                         # aggiorno l'edificio
+                                        building.data_update = datetime.datetime.now() 
+                                        building.versione = 4
                                         building.save()
                                         
                                         # richiamo la stessa pagina, la logica dietro farà tutto il resto
@@ -294,7 +296,83 @@ def generate_building(request, idb):
                                 
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step3.html', session,  context_instance = RequestContext(request))
+                
+                
+                # END STEP 3 #
+                #########################################################################################        
+   
+   
+                # STEP 4: ################################################################################
+                #
+                # FLOOR
+                #       - bearing
+                #       - posizione_immagine
+                #       - zoom_on_map
+                elif building.versione == 4:
+                
+                        # costruisco la formset
+                        FormSet = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
                         
+                        
+                        # caso di ritorno con i dati della form
+                        if request.method == 'POST':
+                                
+                                # recupero i dati della form dal post
+                                #form = FormSet(request.POST, request.FILES)
+                                
+                                #if form.is_valid():
+                
+                                 #       for f in form.forms:
+                                                
+                                  #              floor = f.save(commit=False)
+                                   #             floor.building = building 
+                                        
+                                    #            floor.save()      
+                                         
+                                                                                   
+                                        # aggiorno l'edificio
+                                        building.data_update = datetime.datetime.now()
+                                        building.versione = 5
+                                        building.save()
+                                        
+                                        # richiamo la stessa pagina, la logica dietro farà tutto il resto
+                                        return redirect('buildings.views.generate_building', idb=b_id)
+                                      
+                                #else:
+                                        # la form non è valida, per cui la rispedisco al mittente
+                                 #       session['formset'] = form
+                                          
+                        else:
+                                # costruisco una formset vuota e la passo all'utente
+                                #form = FormSet()
+                                
+                                #session['formset'] = form 
+                                
+                                session['geometria'] = building.geometria  
+                                session['lat'] = building.posizione.y
+                                session['lng'] = building.posizione.x      
+                        # restituisco il template
+                        return render_to_response('buildings/generate_building/step4.html', session,  context_instance = RequestContext(request))
+   
+                # END STEP 4 #
+                #########################################################################################
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
    
    
 

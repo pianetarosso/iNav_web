@@ -91,9 +91,10 @@ class Floor(models.Model):
         
         # dati vari del piano   
         numero_di_piano = models.IntegerField()
-        bearing = models.DecimalField(max_digits=6, decimal_places=2, null=True)
         immagine = ImageField(upload_to=content_file_name)
             
+        bearing = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+        
         # valori per rappresentare l'immagine del piano sulla mappa
         zoom_on_map = models.DecimalField(max_digits=5, decimal_places=3, null=True)
         posizione_immagine = models.PointField(help_text="POINT(longitude latitude)", null=True, srid=4326)

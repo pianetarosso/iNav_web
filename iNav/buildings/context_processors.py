@@ -21,5 +21,8 @@ def constants(request):
                 'MAX_FLOORS'            :       settings.MAX_FLOORS,
                 
                 # Chiave Google Maps
-                'G_MAPS'                :      settings.G_MAPS
+                'G_MAPS'                :       settings.G_MAPS,
+                
+                # Sito base per calcolare la declinazione magnetica
+                'MAGNETIC_URL'          :       settings.MAGNETIC_URL
                 }

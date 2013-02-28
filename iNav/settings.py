@@ -233,6 +233,9 @@ MAX_FLOORS = 6
 
 # Chiave GooGle Maps
 G_MAPS = "AIzaSyA6Cod-waBAQwWkS-vEsAIST3x2HtgsaNg"
+
+# NGDC magnetic declination calculator
+MAGNETIC_URL = 'http://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination'
                 
  
                 

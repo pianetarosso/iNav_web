@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block imports %} 
+        
+        
+        <script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?key={{G_MAPS}}&sensor=false&libraries=geometry">
+        </script>
+        
+        <script type="text/javascript" 
+       src="{{STATIC_URL}}java/map.index.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/generate/richmarker.js"> 
+       </script>
+       
+       <script type="text/javascript" 
+       src="{{STATIC_URL}}java/generate/map.step4.drawRichMarker.js"> 
+       </script>
+       
+       
+        
+<script type="text/javascript">
+
+        
+        
+        // VARIABILI /////////////////////////////////////////////////////////////////////////
+
+        
+        // Declinazione magnetica rispetto al nord di google, indispensabile per ruotare correttamente
+        // le mappe
+        var declinazione;
+
+        // contiene tutti i poligoni che saranno disegnati sulla mappa, compreso quello creato dall'utente
+        var polygons = new google.maps.MVCArray();
+
+        // mappa
+        var map;
+        
+ 
+        // chiamata al loading della pagina
+        function initialize() {
+                
+                // imposto la voce del menù di navigazione
+                changeLinkColor("new_building");
+                
+                // carico la mappa
+                loadMap();
+                
+                // carico il poligono dell'utente
+                polygons = parseJSONPolyline({{geometria.geojson|safe}}, {{user.id}}, polygons, map);
+                
+                // imposto la posizione della mappa sul poligono, e limito gli spostamenti dell'utente
+                setAndBlockPolygon(polygons.getAt(0), map);
+                
+                // calcolo la declinazione magnetica della posizione
+                declinazione = getDeclination({{lat}}, {{lng}});
+                
+                console.log(declinazione);
+        }
+
+        
+               
+
+        // Caricamento della mappa
+        function loadMap() {
+
+                mapOptions = {
+                        center: new google.maps.LatLng(-0, 0),
+                        zoom: 1,
+                        mapTypeId: google.maps.MapTypeId.HYBRID,
+                        
+                        // imposto lo zoom minimo della mappa
+                        minZoom:16
+                };
+                
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);      
+        }
+
+        // funzione per ricavare la declinazione del luogo in base alle coordinate
+        function getDeclination(latitude, longitude) {
+
+	        var url = '{{ MAGNETIC_URL }}';
+
+	        url += '?';
+	        url += 'lat1=' + latitude;
+	        url += '&'
+	        url += 'lon1=' + longitude;
+	        url += '&';
+	        url += 'resultFormat=xml&callback=';
+
+	        var xmlHttp = null;
+	        xmlHttp = new XMLHttpRequest();
+	        xmlHttp.open( "GET", url, false );
+
+	        xmlHttp.send();
+	        xml = xmlHttp.responseXML;
+	
+	        var temp_d = xml.getElementsByTagName('declination');
+
+	        var string = temp_d[0].childNodes[0].nodeValue;
+
+	        string = string.substring(1, string.length - 2);
+
+	        return parseFloat(string);
+        }
+
+</script>
+
+{%endblock imports %}
+
+
+
+
+{% block body %}
+
+<body onload="initialize()">
+  
+    <div id="map_canvas"></div>
+
+</body>
+{% endblock body %}
+
+
+{% block extra_body %}  
+        <script>
+                // blocco l'aggiornamento del pannello laterale
+                update = false;
+        </script>
+
+
+<p>Now you have to draw the shape of your building on the map on the left</p>
+</br>
+<b>Instructions:</b>
+
+        <ul>
+        <li>If you click on the map you create a new Marker.</li> 
+        <li>If you click on a Marker, you can move or delete it.</li>
+        <li>Be careful and accurate!</li>
+        </ul>
+        
+        <form action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
+                {{ form.as_p }}
+        <input type="submit" value="Next step" id ='submit' disabled='true'>
+        
+{% endblock extra_body %}  
+
