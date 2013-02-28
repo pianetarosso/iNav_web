@@ -177,7 +177,7 @@ class StepThreeForm(ModelForm):
                 
                 # verifico che l'immagine sia leggibile e la sua dimensione non superi i 3 Mb                
                 def clean_immagine(self):
-                        print "IMMAGINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                        
                         image = self.cleaned_data.get('immagine')
                         
                         if image:
@@ -195,7 +195,6 @@ class StepThreeFormSet(BaseFormSet):
         def clean(self):
                 
                 if any(self.errors):
-                        print str(self.errors)
                         # Don't bother validating the formset unless each form is valid on its own
                         return
           
@@ -203,7 +202,7 @@ class StepThreeFormSet(BaseFormSet):
       
                 for i in range(0, self.total_form_count()):
                         form = self.forms[i]
-                        print str(form)
+                        
                         numero_di_piano = form.cleaned_data.get('numero_di_piano',None)
            
                         if numero_di_piano in numero_di_piani:
@@ -212,6 +211,40 @@ class StepThreeFormSet(BaseFormSet):
                         numero_di_piani.append(numero_di_piano)
                 return self             
 
+
+# STEP 4
+#       - bearing
+#       - zoom_on_map
+#       - posizione_immagine
+
+class StepFourForm(ModelForm):
+        class Meta:
+        
+                model = Floor
+                
+                exclude = (
+                        'building', 
+                        'immagine',
+                        'numero_di_piano', 
+                )
+                
+                widgets = {
+              #          'bearing'               : HiddenInput(),
+              #          'zoom_on_map'           : HiddenInput(),
+              #          'posizione_immagine'    : HiddenInput()
+                }  
+                
+                # verifico che il bearing               
+                def clean_bearing(self):
+                        
+                        bearing = self.cleaned_data.get('bearing')
+                        
+                        if bearing > 360 or bearing < 0 or bearing == None:
+                                raise ValidationError("Bearing incorrect!")
+                        
+                        return bearing
+                
+                
 
 #########################################################################################################
 

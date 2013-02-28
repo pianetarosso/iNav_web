@@ -313,8 +313,13 @@ def generate_building(request, idb):
                 #       - zoom_on_map
                 elif building.versione == 4:
                 
+                
+                        # recupero i piani
+                        floors = Floor.objects.filter(building=building.pk).order_by('numero_di_piano')
+                        
+                        
                         # costruisco la formset
-                        FormSet = formset_factory(StepThreeForm, formset=StepThreeFormSet) 
+                        FormSet = formset_factory(StepFourForm, max_num=len(floors)) 
                         
                         
                         # caso di ritorno con i dati della form
@@ -346,14 +351,23 @@ def generate_building(request, idb):
                                  #       session['formset'] = form
                                           
                         else:
-                                # costruisco una formset vuota e la passo all'utente
-                                #form = FormSet()
-                                
-                                #session['formset'] = form 
-                                
+                        
+                                # genero i dati iniziali della form con:
+                                #       - bearing => 0
+                                #       - posizione_immagine => building.posizione
+                                #       - zoom_on_map => 50%
+                                data = []
+                                for f in floors:
+                                        data.append({'bearing': 0.0, 'posizione_immagine': str(building.posizione), 'zoom_on_map': 50.0},)
+                                      
+                                # costruisco la formset con i dati iniziali
+                                form = FormSet(initial=data)
+
+                                session['formset'] = form 
                                  
                                 session['geometria'] = building.geometria  
                                 session['declinazione'] = building.base_bearing
+                                session['floors'] = floors
                                       
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step4.html', session,  context_instance = RequestContext(request))

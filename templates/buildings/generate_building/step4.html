@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
+{% load thumbnail %}
+
 {% block imports %} 
         
+        <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/step4.css" />
         
         <script type="text/javascript"
         src="http://maps.googleapis.com/maps/api/js?key={{G_MAPS}}&sensor=false&libraries=geometry">
@@ -30,8 +33,11 @@
         
         // Declinazione magnetica rispetto al nord di google, indispensabile per ruotare correttamente
         // le mappe
-        var declinazione;
+        declinazione = {{ declinazione }};
 
+        // contenitore delle immagini
+        images = {};
+        
         // contiene tutti i poligoni che saranno disegnati sulla mappa, compreso quello creato dall'utente
         var polygons = new google.maps.MVCArray();
 
@@ -54,13 +60,10 @@
                 // imposto la posizione della mappa sul poligono, e limito gli spostamenti dell'utente
                 setAndBlockPolygon(polygons.getAt(0), map);
                 
-                // calcolo la declinazione magnetica della posizione
-                alert({{declinazione}});
-                
+                // nascondo i radio button delle immagini
+                $('#floor_list input:radio').addClass('input_hidden');
+  set();
         }
-
-        
-               
 
         // Caricamento della mappa
         function loadMap() {
@@ -77,42 +80,23 @@
                 map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);      
         }
         
-        // funzione per ricavare la declinazione del luogo in base alle coordinate
-        function getDeclination(latitude, longitude) {
-
-	        var url = '{{ MAGNETIC_URL }}';
-
-	        url += '?';
-	        url += 'lat1=' + latitude;
-	        url += '&'
-	        url += 'lon1=' + longitude;
-	        url += '&';
-	        url += 'resultFormat=xml';
-/*
-	        var xmlHttp = null;
-	        xmlHttp = new XMLHttpRequest();
-	        xmlHttp.open( "GET", url, false );
-
-	        xmlHttp.send();
-	        xml = xmlHttp.responseXML;
-	
-	        var temp_d = xml.getElementsByTagName('declination');
-
-	        var string = temp_d[0].childNodes[0].nodeValue;
-
-	        string = string.substring(1, string.length - 2);
-
-	        return parseFloat(string);
-	        */
-	        $.ajax({
-        url: url,
-        success: function(data){
-            var declination = parseFloat($(data).find("declination").text());
-            alert(declination);
+        // salvo un'immagine nel suo contenitore
+        function addImage(link, id) {
+                immagine = new Image();
+                immagine.src = link;
+                images[id] = immagine;
         }
-    });
+        
+        function set() {
+                
+                $('#floor_list label').click(function(){
+                        $(this).addClass('selected').siblings().removeClass('selected');
+                });
         }
-
+        
+        function updateRichMarker(value) {
+                console.log(images[value]);
+        }
 </script>
 
 {%endblock imports %}
@@ -137,18 +121,31 @@
         </script>
 
 
-<p>Now you have to draw the shape of your building on the map on the left</p>
-</br>
-<b>Instructions:</b>
+<p>Here you have to set the magnetic declination of your floors.</p>
+<p>Select a floor from the list and rotate / move / resize the image on the map until it fits,
+or input manually the magnetic declination</p>
 
-        <ul>
-        <li>If you click on the map you create a new Marker.</li> 
-        <li>If you click on a Marker, you can move or delete it.</li>
-        <li>Be careful and accurate!</li>
-        </ul>
+<div id="floor_list">
+{% for floor in floors %}
+
+        <input type="radio" name="image_list" onclick="updateRichMarker({{ floor.numero_di_piano }});">
         
+        {% thumbnail floor.immagine "x100" as im %}
+             <label for="floor_{{ floor.numero_di_piano }}"><img src="{{ im.url }}" alt="{{ floor.numero_di_piano }}" /></label>   
+        {% endthumbnail %}
+        
+        <script type="text/javascript">
+                {% thumbnail floor.immagine "x400" as im %}
+                        addImage("{{ im.url }}" , {{ floor.numero_di_piano }}); 
+                {% endthumbnail %}
+        </script>
+        
+        </input><br>
+
+{% endfor %} 
+</div>       
         <form action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
-                {{ form.as_p }}
+                {{ formset }}
         <input type="submit" value="Next step" id ='submit' disabled='true'>
         
 {% endblock extra_body %}  

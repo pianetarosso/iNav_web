@@ -9,32 +9,6 @@ var polygons;
 var map
 
 
-///////////////////////////////////////////////////////////////////////////////////////////
-function convertPolygonToNewBuildingPolygon(polygons, user_id) {
-
-        polygon = polygons.pop().getPath();
-        
-        path = new google.maps.MVCArray;
-        
-        for(var i=0; i < polygon.length; i++) 
-                setUserPolygonPoints(polygon.getAt(i));
-
-        polygon = setPolygonOnMap(polygons, user_id);
-        
-        this.polygons = polygons;
-        
-        return polygons;
-}
-///////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // generazione dell'immagine sulla mappa
 

@@ -95,6 +95,7 @@ class Floor(models.Model):
         numero_di_piano = models.IntegerField()
         immagine = ImageField(upload_to=content_file_name)
             
+        # valore di discostamento dal building.base_bearing
         bearing = models.DecimalField(max_digits=6, decimal_places=2, null=True)
         
         # valori per rappresentare l'immagine del piano sulla mappa
