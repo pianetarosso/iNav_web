@@ -30,13 +30,14 @@
         
         // VARIABILI /////////////////////////////////////////////////////////////////////////
 
+
+
+        // array dei piani 
+        var floors = {};
         
         // Declinazione magnetica rispetto al nord di google, indispensabile per ruotare correttamente
         // le mappe
         declinazione = {{ declinazione }};
-
-        // contenitore delle immagini
-        images = {};
         
         // contiene tutti i poligoni che saranno disegnati sulla mappa, compreso quello creato dall'utente
         var polygons = new google.maps.MVCArray();
@@ -60,9 +61,13 @@
                 // imposto la posizione della mappa sul poligono, e limito gli spostamenti dell'utente
                 setAndBlockPolygon(polygons.getAt(0), map);
                 
+                addFloors();
+                
                 // nascondo i radio button delle immagini
                 $('#floor_list input:radio').addClass('input_hidden');
-  set();
+                $('#floor_list label').click(function(){
+                        $(this).addClass('selected').siblings().removeClass('selected');
+                });
         }
 
         // Caricamento della mappa
@@ -80,23 +85,274 @@
                 map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);      
         }
         
-        // salvo un'immagine nel suo contenitore
-        function addImage(link, id) {
-                immagine = new Image();
-                immagine.src = link;
-                images[id] = immagine;
-        }
+        // funzione per il caricamento dei piani
+        function addFloors() {
         
-        function set() {
+                // contatore dei piani
+                var floor_counter = 0;
+        
                 
-                $('#floor_list label').click(function(){
-                        $(this).addClass('selected').siblings().removeClass('selected');
-                });
+                {% for floor in floors %}
+                
+                        {% thumbnail floor.immagine "x400" as im %}   
+                                floors[{{ floor.numero_di_piano }}] = new piano(floor_counter, "{{ im.url }}");
+                        {% endthumbnail %} 
+                
+                        floor_counter++;
+                {% endfor %}
+                
+                console.log(floors);
+                
+                floors[0].marker.setVisible(true);
+       }
+        
+      
+        // creazione di un piano (numero è il numero all'interno dell'array + il link all'immagine)
+        function piano(numero, link) {
+                
+                var posizione = new Posizione(numero);
+                this.posizione = posizione;
+                
+                var bearing = new Bearing(numero);
+                this.bearing = bearing;
+                
+                var zoom =  new Zoom(numero);
+                this.zoom = zoom;
+                
+                var marker = createRichMarker();
+                this.marker = marker;
+                
+                var immagine = loadImage(link, marker);
+                this.immagine = immagine
+                
+                var self = this;
+                
+                // funzione chiamata in caso di modifiche manuali sul bearing
+                this.changeBearing = changeBearing;
+                function changeBearing() {
+                        
+                        marker.setContent(prepareImage()); 
+                }
+                
+                function createRichMarker() {
+                        
+                        return new RichMarker({
+                                position    : posizione.read(),
+                                map         : map,
+                                draggable   : true,
+                                flat        : true,
+                                anchor      : RichMarkerPosition.MIDDLE,
+                                visible     : false,
+                        });
+                }
+                
+                function prepareImage() {
+                
+                        // content element of a rich marker
+                        var div    = document.createElement('div');
+
+                        // imposto colore 
+                        immagine.style.opacity = 0.70;
+
+                        var imageContainer = document.createElement('div');
+                        
+                        // imposto la rotazione e zoom
+                        var deg = bearing.read();
+                        var scale =  zoom.read() / 100;
+                        
+                        var styles =    'display:block;' +
+                                        '-ms-transform:      rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
+                                        '-o-transform:       rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
+                                        '-moz-transform:     rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
+                                        '-webkit-transform:  rotate(' + deg + 'deg) ' + 'scale(' + scale + ');';
+                        
+                
+                        // append rotation container into the richMarker content element
+                        imageContainer.setAttribute('style', styles);
+                        imageContainer.appendChild(immagine);
+                        
+                        div.appendChild(imageContainer);
+              
+                        return div.innerHTML;
+                }
+                
+                
+                // carico l'immagine 
+                function loadImage(link, marker) {
+                
+                        var immagine = new Image();
+                
+                        immagine.src = link;
+                
+                        immagine.onload = function() {
+                                
+                                marker.setContent(prepareImage());
+                                bearing.addListener(self);
+                        };  
+                        
+                        return immagine;
+                 }
         }
         
-        function updateRichMarker(value) {
-                console.log(images[value]);
+        
+        
+        // Gestione della posizione
+        function Posizione(numero) {
+               
+                // identificativo della posizione nella form
+                ID = 'id_form-0-posizione_immagine';
+                
+                // formato della stringa 
+                POINT = "POINT (y x)";
+                
+                // costruisco l'id della form
+                var id = ID.replace('0', numero); 
+                
+                // funzione per leggere il valore
+                this.read = read;
+                function read() {
+                        
+                        var t = document.getElementById(id).value;
+                        
+                        t = t.substring(t.indexOf('(') + 1, t.indexOf(')') + 1);
+                        
+                        var y = parseFloat(t.substring(0, t.indexOf(' ')));
+                        var x = parseFloat(t.substr(t.indexOf(' ') + 1));
+                        
+                        return new google.maps.LatLng(x,y);
+                }
+               
+                // funzione per scriverlo
+                this.write = write;
+                function write(latLng) {        
+                        document.getElementById(id).value = POINT.replace('x', latLng.lat()).replace('y', latLng.lng());
+                }
         }
+        
+     
+        function Zoom(numero) {
+               
+                // identificativo dello zoom nella form
+                ID = 'id_form-0-zoom_on_map';
+                
+                // valore di incremento / decremento dello zoom
+                ZOOM = 2;
+                
+                // zoom massimo / minimo
+                ZOOM_MAX = 100;
+                ZOOM_MIN = 2;
+                
+                // costruisco l'id della form
+                var id = ID.replace('0', numero); 
+                
+                // funzione per leggere il valore
+                this.read = read;
+                function read() {
+                        
+                        var t = document.getElementById(id).value;
+                        return parseFloat(t);
+                }
+                
+                // funzione per scriverlo
+                function write() {
+                        
+                        document.getElementById(id).value = t;
+                }
+                
+                // incrementa lo zoom
+                this.inc = inc;
+                function inc() {
+                      
+                        var t = read() + ZOOM;
+                      
+                        if (t < ZOOM_MAX) {  
+                                value = t;
+                                write(); 
+                                return value;
+                        }  
+                }
+                
+                // decrementa lo zoom
+                this.dec = dec;
+                function dec() {
+                      
+                        var t = read() - ZOOM;
+                      
+                        if (t > ZOOM_MIN) {  
+                                value = t;
+                                write(); 
+                                return value;
+                        }  
+                }   
+        }
+        
+        function Bearing(numero) {
+                
+                // identificativo del bearing nella form
+                ID = 'id_form-0-bearing';
+        
+                // valore di incremento / decremento del bearing
+                BEARING = 0.1;
+                
+                // bearing massimo / minimo
+                BEARING_MAX = 360;
+                BEARING_MIN = 0;
+                
+                // identificativo della form
+                var id = ID.replace('0', numero);
+                
+                // funzione per aggiungere i listener per la scrittura
+                this.addListener = addListener;
+                function addListener(o) {
+                        var t = document.getElementById(id);
+                        t.oninput = function() {
+                                o.changeBearing();
+                        };
+                }
+                
+                
+                // funzione per leggere il valore
+                this.read = read;
+                function read() {
+                        
+                        var t = parseFloat(document.getElementById(id).value);
+                        
+                        if (isNaN(t)) {
+                                t = 0;
+                                write(declinazione);
+                        }
+                                
+                        return (t + declinazione) % 360;
+                }
+                
+                // funzione per scriverlo
+                this.write = write;
+                function write(value) {
+                        document.getElementById(id).value = (value - declinazione) % 360;
+                }
+                
+                // incrementa il bearing
+                this.inc = inc;
+                function inc() {
+                      
+                        var value = (read() + BEARING) % 360;
+                      
+                        write(value); 
+                        return value;
+                }
+                
+                // decrementa il bearing
+                this.dec = dec;
+                function dec() {
+                      
+                        var value = (read() - BEARING) % 360;
+                      
+                        write(value); 
+                        return value;
+                }   
+        }
+        
+        
 </script>
 
 {%endblock imports %}
@@ -128,18 +384,8 @@ or input manually the magnetic declination</p>
 <div id="floor_list">
 {% for floor in floors %}
 
-        <input type="radio" name="image_list" onclick="updateRichMarker({{ floor.numero_di_piano }});">
-        
-        {% thumbnail floor.immagine "x100" as im %}
-             <label for="floor_{{ floor.numero_di_piano }}"><img src="{{ im.url }}" alt="{{ floor.numero_di_piano }}" /></label>   
-        {% endthumbnail %}
-        
-        <script type="text/javascript">
-                {% thumbnail floor.immagine "x400" as im %}
-                        addImage("{{ im.url }}" , {{ floor.numero_di_piano }}); 
-                {% endthumbnail %}
-        </script>
-        
+        <input type="radio" name="image_list" onclick="updateRichMarker({{ floor.numero_di_piano }});"> 
+        {{ floor.numero_di_piano }}             
         </input><br>
 
 {% endfor %} 

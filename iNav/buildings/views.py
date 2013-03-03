@@ -358,7 +358,7 @@ def generate_building(request, idb):
                                 #       - zoom_on_map => 50%
                                 data = []
                                 for f in floors:
-                                        data.append({'bearing': 0.0, 'posizione_immagine': str(building.posizione), 'zoom_on_map': 50.0},)
+                                        data.append({'bearing': 25.0, 'posizione_immagine': str(building.posizione), 'zoom_on_map': 90.0},)
                                       
                                 # costruisco la formset con i dati iniziali
                                 form = FormSet(initial=data)
