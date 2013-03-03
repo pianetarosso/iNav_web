@@ -179,7 +179,7 @@ class StepThreeForm(ModelForm):
                 def clean_immagine(self):
                         
                         image = self.cleaned_data.get('immagine')
-                        
+                        # AGGIUNGERE VALIDAZIONE PER IMMAGINE TROPPO PICCOLA!!!!!!!!!!!!!!
                         if image:
                                 if image._size > MAX_IMAGE_SIZE:
                                         raise ValidationError("Image file too large ( maximum 3 Mb )")
@@ -229,12 +229,13 @@ class StepFourForm(ModelForm):
                 )
                 
                 widgets = {
-              #          'bearing'               : HiddenInput(),
-              #          'zoom_on_map'           : HiddenInput(),
-              #          'posizione_immagine'    : HiddenInput()
+                        'bearing'               : HiddenInput(),
+                        'zoom_on_map'           : HiddenInput(),
+                        'posizione_immagine'    : HiddenInput(),
+                        'zoom_of_map'           : HiddenInput()
                 }  
                 
-                # verifico che il bearing               
+                # verifico che il bearing sia compreso tra 0 e 360             
                 def clean_bearing(self):
                         
                         bearing = self.cleaned_data.get('bearing')
@@ -244,7 +245,27 @@ class StepFourForm(ModelForm):
                         
                         return bearing
                 
-                
+                # verifico che lo zoom sia compreso tra 2 e 200
+                def clean_zoom_on_map(self):
+                                
+                        zoom = self.cleaned_data.get('zoom_on_map')
+                        
+                        if zoom > 200 or zoom < 2 or zoom == None:
+                                raise ValidationError("Zoom incorrect!")
+                        
+                        return zoom
+                        
+                # verifico che lo zoom della mappa sia compreso tra 15 e 21
+                def clean_zoom_of_map(self):
+                                
+                        zoom = self.cleaned_data.get('zoom_of_map')
+                        
+                        if zoom > 21 or zoom < 15 or zoom == None:
+                                raise ValidationError("Zoom of map incorrect!")
+                        
+                        return zoom
+                        
+               # MANCA VERIFICA CHE L'IMMAGINE SIA ABBASTANZA VICINA ALL'EDIFICIO
 
 #########################################################################################################
 

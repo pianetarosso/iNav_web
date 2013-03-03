@@ -117,6 +117,7 @@ function setAndBlockPolygon(polygon, map) {
 
         var bounds = setOptimalPanEZoom(polygon, map);
         blockMapMovement(bounds);
+        return bounds;
 }
 
 

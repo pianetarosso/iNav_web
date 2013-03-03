@@ -326,16 +326,20 @@ def generate_building(request, idb):
                         if request.method == 'POST':
                                 
                                 # recupero i dati della form dal post
-                                #form = FormSet(request.POST, request.FILES)
+                                forms = FormSet(request.POST, request.FILES)
                                 
-                                #if form.is_valid():
+                                if forms.is_valid():
                 
-                                 #       for f in form.forms:
+                                        for f, old_floor in map(None, forms.forms, floors):
                                                 
-                                  #              floor = f.save(commit=False)
-                                   #             floor.building = building 
-                                        
-                                    #            floor.save()      
+                                                floor = f.save(commit=False)
+                                                
+                                                old_floor.bearing               = floor.bearing
+                                                old_floor.posizione_immagine    = floor.posizione_immagine
+                                                old_floor.zoom_on_map           = floor.zoom_on_map
+                                                old_floor.zoom_of_map           = floor.zoom_of_map
+                                                
+                                                old_floor.save()      
                                          
                                                                                    
                                         # aggiorno l'edificio
@@ -346,9 +350,9 @@ def generate_building(request, idb):
                                         # richiamo la stessa pagina, la logica dietro farà tutto il resto
                                         return redirect('buildings.views.generate_building', idb=b_id)
                                       
-                                #else:
+                                else:
                                         # la form non è valida, per cui la rispedisco al mittente
-                                 #       session['formset'] = form
+                                        session['formset'] = forms
                                           
                         else:
                         
@@ -356,18 +360,19 @@ def generate_building(request, idb):
                                 #       - bearing => 0
                                 #       - posizione_immagine => building.posizione
                                 #       - zoom_on_map => 50%
+                                #       - zoom_of_map => -1 (verrà modificato al caricamento)
                                 data = []
                                 for f in floors:
-                                        data.append({'bearing': 25.0, 'posizione_immagine': str(building.posizione), 'zoom_on_map': 90.0},)
+                                        data.append({'bearing': 0.0, 'posizione_immagine': str(building.posizione), 'zoom_on_map': 50.0, 'zoom_of_map' : -1},)
                                       
                                 # costruisco la formset con i dati iniziali
-                                form = FormSet(initial=data)
+                                forms = FormSet(initial=data)
 
-                                session['formset'] = form 
+                                session['formset'] = forms 
                                  
-                                session['geometria'] = building.geometria  
-                                session['declinazione'] = building.base_bearing
-                                session['floors'] = floors
+                        session['geometria'] = building.geometria  
+                        session['declinazione'] = building.base_bearing
+                        session['floors'] = floors
                                       
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step4.html', session,  context_instance = RequestContext(request))

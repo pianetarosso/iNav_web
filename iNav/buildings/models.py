@@ -96,10 +96,16 @@ class Floor(models.Model):
         immagine = ImageField(upload_to=content_file_name)
             
         # valore di discostamento dal building.base_bearing
-        bearing = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+        bearing = models.DecimalField(max_digits=9, decimal_places=6, null=True)
         
         # valori per rappresentare l'immagine del piano sulla mappa
-        zoom_on_map = models.DecimalField(max_digits=5, decimal_places=3, null=True)
+        
+        # zoom dell'immagine sulla mappa: 
+        # IMPORTANTE: si riferisce ad un'immagine con larghezza di 400px!!!!!!!!!!!!!
+        zoom_on_map = models.DecimalField(max_digits=6, decimal_places=3, null=True)
+        # zoom della mappa
+        zoom_of_map = models.IntegerField(max_length=2, null=True)
+        # posizione dell'immagine
         posizione_immagine = models.PointField(help_text="POINT(longitude latitude)", null=True, srid=4326)
         
 

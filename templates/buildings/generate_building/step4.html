@@ -35,6 +35,9 @@
         // array dei piani 
         var floors = {};
         
+        // id del piano selezionato
+        var selected;
+        
         // Declinazione magnetica rispetto al nord di google, indispensabile per ruotare correttamente
         // le mappe
         declinazione = {{ declinazione }};
@@ -59,15 +62,9 @@
                 polygons = parseJSONPolyline({{geometria.geojson|safe}}, {{user.id}}, polygons, map);
                 
                 // imposto la posizione della mappa sul poligono, e limito gli spostamenti dell'utente
-                setAndBlockPolygon(polygons.getAt(0), map);
+                var bounds = setAndBlockPolygon(polygons.getAt(0), map);
                 
                 addFloors();
-                
-                // nascondo i radio button delle immagini
-                $('#floor_list input:radio').addClass('input_hidden');
-                $('#floor_list label').click(function(){
-                        $(this).addClass('selected').siblings().removeClass('selected');
-                });
         }
 
         // Caricamento della mappa
@@ -94,264 +91,76 @@
                 
                 {% for floor in floors %}
                 
+                        // genero l'immagine ridimensionata e creo l'oggetto piano
                         {% thumbnail floor.immagine "x400" as im %}   
                                 floors[{{ floor.numero_di_piano }}] = new piano(floor_counter, "{{ im.url }}");
                         {% endthumbnail %} 
                 
                         floor_counter++;
                 {% endfor %}
-                
-                console.log(floors);
-                
-                floors[0].marker.setVisible(true);
        }
         
+        // imposto il marker selezionato
+        function setMarkerSelected(id) {
+                
+                for (f in floors) {
+                        floors[f].marker.setVisible(f == id);
+                        floors[f].update_marker();       
+                }
+                        
+                selected = id;
+                
+                document.getElementById("bearing_range").value = floors[id].bearing.read();
+                document.getElementById("bearing_text").value = floors[id].bearing.read();
+                document.getElementById("zoom_range").value = floors[id].zoom.read();
+        }
       
-        // creazione di un piano (numero è il numero all'interno dell'array + il link all'immagine)
-        function piano(numero, link) {
-                
-                var posizione = new Posizione(numero);
-                this.posizione = posizione;
-                
-                var bearing = new Bearing(numero);
-                this.bearing = bearing;
-                
-                var zoom =  new Zoom(numero);
-                this.zoom = zoom;
-                
-                var marker = createRichMarker();
-                this.marker = marker;
-                
-                var immagine = loadImage(link, marker);
-                this.immagine = immagine
-                
-                var self = this;
-                
-                // funzione chiamata in caso di modifiche manuali sul bearing
-                this.changeBearing = changeBearing;
-                function changeBearing() {
-                        
-                        marker.setContent(prepareImage()); 
-                }
-                
-                function createRichMarker() {
-                        
-                        return new RichMarker({
-                                position    : posizione.read(),
-                                map         : map,
-                                draggable   : true,
-                                flat        : true,
-                                anchor      : RichMarkerPosition.MIDDLE,
-                                visible     : false,
-                        });
-                }
-                
-                function prepareImage() {
-                
-                        // content element of a rich marker
-                        var div    = document.createElement('div');
-
-                        // imposto colore 
-                        immagine.style.opacity = 0.70;
-
-                        var imageContainer = document.createElement('div');
-                        
-                        // imposto la rotazione e zoom
-                        var deg = bearing.read();
-                        var scale =  zoom.read() / 100;
-                        
-                        var styles =    'display:block;' +
-                                        '-ms-transform:      rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
-                                        '-o-transform:       rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
-                                        '-moz-transform:     rotate(' + deg + 'deg) ' + 'scale(' + scale + ');' +
-                                        '-webkit-transform:  rotate(' + deg + 'deg) ' + 'scale(' + scale + ');';
-                        
-                
-                        // append rotation container into the richMarker content element
-                        imageContainer.setAttribute('style', styles);
-                        imageContainer.appendChild(immagine);
-                        
-                        div.appendChild(imageContainer);
-              
-                        return div.innerHTML;
-                }
-                
-                
-                // carico l'immagine 
-                function loadImage(link, marker) {
-                
-                        var immagine = new Image();
-                
-                        immagine.src = link;
-                
-                        immagine.onload = function() {
-                                
-                                marker.setContent(prepareImage());
-                                bearing.addListener(self);
-                        };  
-                        
-                        return immagine;
-                 }
-        }
+        // aggiorno i campi bearing (sia quello comune che quelli di ogni oggetto)
+        function updateBearing(value) {
         
+                var v = parseFloat(value);
+                
+                if (!isNaN(v)) {
         
-        
-        // Gestione della posizione
-        function Posizione(numero) {
-               
-                // identificativo della posizione nella form
-                ID = 'id_form-0-posizione_immagine';
-                
-                // formato della stringa 
-                POINT = "POINT (y x)";
-                
-                // costruisco l'id della form
-                var id = ID.replace('0', numero); 
-                
-                // funzione per leggere il valore
-                this.read = read;
-                function read() {
+                        document.getElementById("bearing_text").value = v;
+                        document.getElementById("bearing_range").value = v;
+                        floors[selected].bearing.write(value);
+                        floors[selected].update_marker();
                         
-                        var t = document.getElementById(id).value;
-                        
-                        t = t.substring(t.indexOf('(') + 1, t.indexOf(')') + 1);
-                        
-                        var y = parseFloat(t.substring(0, t.indexOf(' ')));
-                        var x = parseFloat(t.substr(t.indexOf(' ') + 1));
-                        
-                        return new google.maps.LatLng(x,y);
-                }
-               
-                // funzione per scriverlo
-                this.write = write;
-                function write(latLng) {        
-                        document.getElementById(id).value = POINT.replace('x', latLng.lat()).replace('y', latLng.lng());
-                }
-        }
-        
-     
-        function Zoom(numero) {
-               
-                // identificativo dello zoom nella form
-                ID = 'id_form-0-zoom_on_map';
-                
-                // valore di incremento / decremento dello zoom
-                ZOOM = 2;
-                
-                // zoom massimo / minimo
-                ZOOM_MAX = 100;
-                ZOOM_MIN = 2;
-                
-                // costruisco l'id della form
-                var id = ID.replace('0', numero); 
-                
-                // funzione per leggere il valore
-                this.read = read;
-                function read() {
-                        
-                        var t = document.getElementById(id).value;
-                        return parseFloat(t);
-                }
-                
-                // funzione per scriverlo
-                function write() {
-                        
-                        document.getElementById(id).value = t;
-                }
-                
-                // incrementa lo zoom
-                this.inc = inc;
-                function inc() {
-                      
-                        var t = read() + ZOOM;
-                      
-                        if (t < ZOOM_MAX) {  
-                                value = t;
-                                write(); 
-                                return value;
-                        }  
-                }
-                
-                // decrementa lo zoom
-                this.dec = dec;
-                function dec() {
-                      
-                        var t = read() - ZOOM;
-                      
-                        if (t > ZOOM_MIN) {  
-                                value = t;
-                                write(); 
-                                return value;
-                        }  
-                }   
-        }
-        
-        function Bearing(numero) {
-                
-                // identificativo del bearing nella form
-                ID = 'id_form-0-bearing';
-        
-                // valore di incremento / decremento del bearing
-                BEARING = 0.1;
-                
-                // bearing massimo / minimo
-                BEARING_MAX = 360;
-                BEARING_MIN = 0;
-                
-                // identificativo della form
-                var id = ID.replace('0', numero);
-                
-                // funzione per aggiungere i listener per la scrittura
-                this.addListener = addListener;
-                function addListener(o) {
-                        var t = document.getElementById(id);
-                        t.oninput = function() {
-                                o.changeBearing();
-                        };
-                }
-                
-                
-                // funzione per leggere il valore
-                this.read = read;
-                function read() {
-                        
-                        var t = parseFloat(document.getElementById(id).value);
-                        
-                        if (isNaN(t)) {
-                                t = 0;
-                                write(declinazione);
+                        if (document.getElementById("checkbox").checked) {
+                                for (f in floors) {
+                                        floors[f].bearing.write(value);
+                                        floors[f].update_marker();
+                                }
                         }
-                                
-                        return (t + declinazione) % 360;
+                        else {
+                                floors[selected].bearing.write(value);
+                                floors[selected].update_marker();
+                        }
                 }
-                
-                // funzione per scriverlo
-                this.write = write;
-                function write(value) {
-                        document.getElementById(id).value = (value - declinazione) % 360;
-                }
-                
-                // incrementa il bearing
-                this.inc = inc;
-                function inc() {
-                      
-                        var value = (read() + BEARING) % 360;
-                      
-                        write(value); 
-                        return value;
-                }
-                
-                // decrementa il bearing
-                this.dec = dec;
-                function dec() {
-                      
-                        var value = (read() - BEARING) % 360;
-                      
-                        write(value); 
-                        return value;
-                }   
+        
         }
         
+        // aggiorno l'alfa dei marker
+        function updateAlpha() {
+                for (f in floors)
+                        floors[f].update_marker();
+        }
+        
+        // aggiorno lo zoom 
+        function updateZoom(value) {
+                
+                if (document.getElementById("checkbox").checked) {
+                        for (f in floors) {
+                                floors[f].zoom.write(value);
+                                floors[f].update_marker();
+                        }
+                }
+                else {
+                        floors[selected].zoom.write(value);
+                        floors[selected].update_marker();
+                }
+        }
         
 </script>
 
@@ -378,18 +187,39 @@
 
 
 <p>Here you have to set the magnetic declination of your floors.</p>
-<p>Select a floor from the list and rotate / move / resize the image on the map until it fits,
-or input manually the magnetic declination</p>
+<p>Select a floor from the list and rotate / move / resize the image on the map until it fits!</p>
+
+
 
 <div id="floor_list">
+
+        <input type="checkbox" id="checkbox" value="false"/> Change values for all the floors
+        </br>
+        </br>
+        
 {% for floor in floors %}
 
-        <input type="radio" name="image_list" onclick="updateRichMarker({{ floor.numero_di_piano }});"> 
-        {{ floor.numero_di_piano }}             
+        <input type="radio" name="floor_list" onclick="setMarkerSelected({{ floor.numero_di_piano }});" disabled> 
+         Floor: {{ floor.numero_di_piano }}             
         </input><br>
 
 {% endfor %} 
-</div>       
+
+        <p>Bearing:</p>
+        <input type="range"  id="bearing_range" name="floor_list" min="0.00" max="360.00" step="0.01" disabled onchange="updateBearing(this.value)"/>
+        <input type="text" name="floor_list" id="bearing_text" disabled oninput="updateBearing(this.value)"/>
+        </br>
+        
+        <p>Zoom:</p>
+        <input type="range"  id ="zoom_range" name="floor_list" min="2.00" max="100.00" step="0.01" disabled onchange="updateZoom(this.value)"/>
+        </br>
+        
+        <p>Transparency:</p>
+        <input type="range"  id ="alpha_range" name="floor_list" min="0.30" max="1.00" value='0.70' step="0.01" disabled onchange="updateAlpha()"/>
+        
+</div>     
+        </br>
+        </br>  
         <form action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
                 {{ formset }}
         <input type="submit" value="Next step" id ='submit' disabled='true'>
