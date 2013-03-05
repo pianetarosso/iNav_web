@@ -137,21 +137,7 @@
                 }
         }
  
-        // funzione per recuperare i piani tramite chiamata ad una pagina e passarli alla JApplet
-        function getFloors() {
-
-                var xmlHttp = null;
-
-                xmlHttp = new XMLHttpRequest();
-                xmlHttp.open( "GET", "{% url buildings.views.getFloors building_id=building.id %}", false );
-                xmlHttp.send(null);
-                var json = JSON.parse(xmlHttp.responseText);
-                console.log(json);
-                // invio i piani anche all'iframe per costuire le options di input
-                sendFloorsToIframe(json);
-                
-                return json;
-        }
+        
  
  
 //////////////////////////////////////////////////////////////////////////////////////////////

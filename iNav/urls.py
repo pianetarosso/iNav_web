@@ -28,8 +28,6 @@ urlpatterns = patterns('',
         # Users
         (r'^accounts/', include('allauth.urls')),
 
-        # Avatar
-        (r'^avatar/', include('avatar.urls')),
             
         # vetrina dell'applicazione (da creare)
         url(r'^buildings/iNav/$', 'buildings.views.show'),
@@ -51,11 +49,8 @@ urlpatterns = patterns('',
         
         
         # generazione building
-        #url(r'^buildings/generate/list, 'buildings.views.list_incomplete'),
-        #url(r'^buildings/generate/new_building=(?P<new_id>-?\d+)', 'buildings.views.generate'),
-        
         url(r'^buildings/generate/new_building=(?P<idb>-?\d+)', 'buildings.views.generate_building'),
-        #url(r'^buildings/generate/step=(?P<new_id>\d+)', 'buildings.views.step'),
+        
         
         
         
@@ -73,10 +68,7 @@ urlpatterns = patterns('',
             
             
             
-        # generazione di immagini ridimensionate (serve?)
-        url(r'^buildings/generate/image_r(?P<idf>\d+)&(?P<id_b>\d+)&(?P<width>\d+)', 'buildings.views.setBearingimage'),
-
-        
+       
 )
 
 if settings.DEBUG:

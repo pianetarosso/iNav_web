@@ -121,7 +121,7 @@ p {
 /*******************************************************************************/
 
 
-#map_canvas, #mapGenerator { 
+#map_canvas, #draw_canvas { 
         height:400px;
         width:95%; 
         position:center;
