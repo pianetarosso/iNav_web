@@ -413,7 +413,7 @@ class StepFivePathForm(forms.ModelForm):
 
 # FORM DELLA STANZA:
 #       - NOME
-#       -PERSONE
+#       - PERSONE
 #       - ALTRO
 #       - LINK
 #       - ID TEMPORANEO PUNTO
