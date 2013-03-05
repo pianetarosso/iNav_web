@@ -10,6 +10,7 @@
 // GESTORE DELLA LISTA DI PUNTI
 function pointList() {
 
+        // { id : point }
         list = {};
         
         
@@ -308,9 +309,10 @@ function point(rfid, x, y, floor_n, access, id) {
 
 
 
-// gestore della lista di stanze
+// GESTORE DELLA LISTA DI STANZE
 function roomList() {
 
+        // { point_id : room }
         list = {};
         
         
@@ -603,18 +605,235 @@ function room_(point_id, nome, link, people, notes) {
 
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+// PATH //
 
 
 
-
-// PATH => {[id_point_a, id_point_b] : object}
+// OGGETTO PATH 
 function path(point_a, point_b, lift, stair) {
 
+
+        var self = this;
+        
+        // variabili
         this.point_a = point_a;
         this.point_b = point_b;
-        
         this.lift = lift;
         this.stair = stair;
+        
+        
+        
+        // contenitore delle path
+        var path_div = document.getElementById('paths');
+        var input_path = path_div.getElementsByTagName('input');
+        
+        
+        // contenitore dei dati
+        var data = [point_a, point_b, lift, stair];
+        
+        // contenitore dei div
+        var div = {     
+                        // numero totale di form di punti
+                        'TOTAL'         : null,
+        
+                        // div di input
+                        'temp_a'          : null,
+                        'temp_b'             : null,
+                        'ascensore'             : null,
+                        'scala'         : null
+                  }
+        this.div=div;
+        
+        // carico gli elementi dalla form
+        load_divs();
+        function load_divs() {
+        
+                // scansiono tutti gli input
+                for (ip in input_path) {
+                        
+                        var element = input_path[ip];
+                        
+                        // verifico se c'è corrispondenza tra gli elementi della pagina e quelli del dizionario
+                        for (d in div)          
+                                if (element.name.match(d) != null)
+                                        div[d] = element;
+                        
+                        // verifico se posso terminare la scansione
+                        var test = true;
+                        for (d in div)
+                                test = test && (div[d] != null);
+                        
+                        if (test)
+                                break;         
+                }
+        }
+        
+        // funzione per resituire il numero di form totali
+        // se la prima form è vuota restituisce NULL
+        this.getTotal = getTotal
+        function getTotal() {
+        
+                var n = parseInt(div['TOTAL'].value);
+                
+                if (div['temp_a'].value == '')
+                        return null;
+                        
+                return n;  
+        }
+        
+        
+        // funzione per il salvataggio dei dati
+        this.save = save;
+        function save() {
+                
+                // contatore per navigare l'arralift dei dati
+                var counter = 0;
+              
+                // qui siamo nel caso in cui la prima form NON è vuota, 
+                // quindi creo delle nuove form e le 'appendo' al div
+                if (div['temp_a'].value != '')   {    
+                        for (d in div)      
+                                if (d != 'TOTAL') {
+                                        
+                                        // costruisco un nuovo div con i nuovi parametri
+                                        var new_div = document.createElement('input');
+                                        new_div.type = 'hidden';
+                                        new_div.name = div[d].name.replace('0', div['TOTAL'].value);
+                                        new_div.id = div[d].id.replace('0', div['TOTAL'].value);
+                                        new_div.value = data[counter];
+                                        
+                                        counter++;
+                                        
+                                        // lo 'attacco' al resto della form
+                                        path_div.appendChild(new_div);
+                                        
+                                        // sostituisco il div nel dizionario
+                                        div[d] = new_div;
+                                }
+                                
+                        // incremento il total count
+                        div['TOTAL'].value = parseInt(div['TOTAL'].value) + 1;                
+                }
+                // in questo caso riempiamo la prima form
+                else 
+                        for (d in div)             
+                                if (d != 'TOTAL') {
+                                        div[d].value = data[counter];
+                                        counter++;
+                                }
+        }
+       
+        // funzione per la cancellazione dei dati
+        this.delete_ = delete_
+        function delete_() {
+        
+                if (parseInt(div['TOTAL'].value) > 1) {
+                        // cancello l'elemento dalla form
+                        for (d in div) 
+                                if (d != 'TOTAL')
+                                        div[d].remove();
+                        
+                        // decremento il total count
+                        div['TOTAL'].value = parseInt(div['TOTAL'].value) - 1;
+                }
+                
+                // DEVE restare almeno una form vuota, quindi cancello solo i dati dell'ultima
+                else 
+                        for (d in div) 
+                                div[d].value = '';   
+        }
+        
+        
+        
+        // funzione per l'update
+        this.update = update;
+        function update (point_a, point_b, lift, stair) {
+
+                // aggiorno le variabili e gli oggetti
+                self.point_a = point_a;
+                self.point_b = point_b;
+                self.lift = lift;
+                self.stair = stair;
+                
+                self.data = [self.point_a, self.point_b, self.lift, self.stair];
+                
+                
+                // aggiorno i dati nella form
+                var counter = 0; 
+                for (d in div)             
+                        if (d != 'TOTAL') {
+                                div[d].value = self.data[counter];
+                                counter++;
+                        }           
+        }
+        
+        // funzione per modificare il numero identificativo del div
+        this.changeDivNumber = changeDivNumber
+        function changeDivNumber(n) {
+                
+                for (d in div) 
+                        if (d != 'TOTAL') {
+                                
+                                // trovo il 'vecchio' numero
+                                var old = div[d].id.split('-')[1];
+                                
+                                // lo rimpiazzo
+                                div[d].id = div[d].id.replace(old, n);
+                                div[d].name = div[d].name.replace(old,n);
+                        }
+        }
+        
+        
+        // funzione per caricare il div dalla pagina dato il numero, restituisce sé stesso
+        this.load = load;
+        function load(n) {
+                
+                var counter = 0;
+                
+                for (d in div) 
+                        if (d != 'TOTAL') {
+                                
+                                // creo il nuovo identificativo
+                                var new_id = div[d].id.replace('0', n);
+                                
+                                var new_div = document.getElementById(new_id);
+                                
+                                // cambio il riferimento al div
+                                div[d] = new_div;
+                                
+                                // aggiorno i dati
+                                switch (counter) {
+                                        
+                                        case(0):
+                                                self.point_a = parseInt(new_div.value);
+                                                break;
+                                        case(1):
+                                                self.point_b = parseInt(new_div.value);
+                                                break;
+                                        case(2):
+                                                self.lift = new_div.value;
+                                                break;        
+                                        case(3):
+                                                self.stair = new_div.value;
+                                                break;       
+                                }
+                                counter++;
+                        }
+                        
+                self.data = [self.point_a, self.point_b, self.lift, self.stair];
+                return self;                
+        }        
 }
+ 
+
+
+
+
+// END PATH 
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 

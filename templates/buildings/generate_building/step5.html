@@ -141,7 +141,84 @@
         
         
         
+//(path_a, path_b, lift, stair)
+
+// GESTORE DELLA LISTA DI PUNTI
+function pathList() {
+
+        // { [point_a, point_b] : room }
+        list = {};
         
+        
+        // aggiungo un percorso
+        this.add = add;
+        function add(point_a, point_b, lift, stair) {
+        
+                var id = [point_a, point_b];
+                list[id] = new path(point_a, point_b, lift, stair);
+                list[id].save();
+        }
+        
+        // recupero un percorso
+        this.get = get;
+        function get(id_a, id_b) {
+        
+                return list[ [id_a, id_b] ];
+        }
+        
+        // aggiorno un percorso
+        this.update = update;
+        function update(point_a, point_b, lift, stair) {
+        
+                var id = [point_a, point_b];
+                list[id].update(point_a, point_b, lift, stair);
+        }
+        
+        // cancello un percorso, e sistemo anche i numeri incrementali
+        this.del = del;
+        function del(id_a, id_b) {
+        
+                var id = [id_a, id_b];
+                
+                // cancello il div
+                list[id].delete_();
+                
+                // cancello l'elemento dalla lista
+                delete list[id];
+                
+                // aggiorno i numeri incrementali dei "sopravvissuti"
+                var counter = 0;
+                for ( l in list) {
+                        list[l].changeDivNumber(counter);
+                        counter++;
+                }
+        }
+        
+        // carico tutti i div presenti
+        this.load = load
+        function load() {
+                
+                var n = new path().getTotal();
+                
+                if (n == null)
+                        return;
+                
+                for (var i=0; i < n; i++) {
+                
+                        // carico il div corrispondente
+                        p = new path().load(i);
+                        
+                        var id = [p.point_a, p.point_b];
+                        list[id] = p;
+                        
+                        return list;
+                }
+        
+        }
+}        
+        
+      
+       
         
         
         
