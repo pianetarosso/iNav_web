@@ -33,7 +33,7 @@ function createNewMarker(id, x, y, piano) {
         this.x = parseInt(x);
         this.y = parseInt(y);
         this.piano = parseInt(piano)
-       // form.new_marker();
+        form.new_marker();
 }
         
         

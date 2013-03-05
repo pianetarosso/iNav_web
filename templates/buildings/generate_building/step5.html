@@ -135,6 +135,24 @@
         
         
         
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -190,12 +208,14 @@
 
 <div id="commands_input" class="app_input">
         Select which object add:
+        <!-- OPERATION TYPE -->
         <select id="operation_type" disabled="true"  name="commands">
                 <option value="none" selected="selected">None</option>
                 <option value="marker">Marker</option>
                 <option value="path" >Path</option>          
         </select>
         </br></br>
+        <!-- FLOOR SELECTION -->
         Select on which floor:
         <select id="floor_number" disabled="true"  name="commands">      
         </select>       
@@ -265,5 +285,21 @@
         </div>     
 </div>
 
+
+<form action="{% url buildings.views.generate_building idb=building %}" method="post">{% csrf_token %}
+
+        <div id='points'>
+                {{ point }}
+        </div>
+        
+        <div id='paths'>        
+                {{ path }}
+        </div>
+        
+        <div id='rooms'>        
+                {{ room }}
+        </div>
+                
+<input type="submit" value="Save and close" id ='submit' disabled='true'>
 
 {% endblock extra_body %} 

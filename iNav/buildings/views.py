@@ -387,7 +387,34 @@ def generate_building(request, idb):
                 #       
                 elif building.versione == 5:
                 
+                        PointFormSet = formset_factory(StepFivePointForm, formset=StepFivePointFormSet)
+                        PathFormSet = formset_factory(StepFivePathForm)
+                        RoomFormSet = formset_factory(StepFiveRoomForm)
                 
+                        if request.method == 'POST':
+                        
+                                # recupero i dati della form dal post
+                                points = PointFormSet(request.POST, prefix='points')
+                                paths = PathFormSet(request.POST, prefix='paths')
+                                rooms = RoomFormSet(request.POST, prefix='rooms')
+                                
+                                if points.is_valid() and paths.is_valid() and rooms.is_valid:
+                                
+                                        print str(points)
+                                        print str(paths)
+                                        print str(rooms)
+                        
+                        else:
+                        
+                                # costruisco le form
+                                pointForm = PointFormSet(prefix='points')
+                                pathForm = PathFormSet(prefix='paths')
+                                roomForm = RoomFormSet(prefix='rooms')
+
+                                session['point'] = pointForm 
+                                session['path'] = pathForm
+                                session['room'] = roomForm
+                                
                         
                         # restituisco il template
                         return render_to_response('buildings/generate_building/step5.html', session,  context_instance = RequestContext(request))
@@ -398,100 +425,6 @@ def generate_building(request, idb):
    
    
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-
-   
-# Dettaglio di un edificio selezionato nell'index
-def detail(request, building_id):
-        session = {}
-        
-        b = get_object_or_404(Building, pk=building_id)
-        session['building'] = b
-        
-        session['floors'] = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
-       
-        session['points'] = Point.objects.filter(building=building_id).order_by('piano')
-        
-        temp_rooms = Room.objects.filter(building=building_id) 
-        ordered_rooms = {}
-        for r in temp_rooms:
-        
-                if not ordered_rooms.has_key(r.punto.piano.numero_di_piano):
-                        ordered_rooms[r.punto.piano.numero_di_piano] = []   
-                
-                ordered_rooms[r.punto.piano.numero_di_piano].append(r)
-                                
-        session['rooms'] = ordered_rooms
-        
-        
-        paths = Path.objects.filter(building=building_id)
-        
-        elevators = {}
-        stairs = {}
-        
-        for p in paths:
-                
-                if not elevators.has_key(p.a.piano.numero_di_piano):
-                        elevators[p.a.piano.numero_di_piano] = []
-                        
-                if not elevators.has_key(p.b.piano.numero_di_piano):
-                        elevators[p.b.piano.numero_di_piano] = []
-                        
-                if not stairs.has_key(p.a.piano.numero_di_piano):
-                        stairs[p.a.piano.numero_di_piano] = []
-                        
-                if not stairs.has_key(p.b.piano.numero_di_piano):
-                        stairs[p.b.piano.numero_di_piano] = []
-                        
-                if p.ascensore != '':
-                        elevators[p.a.piano.numero_di_piano].append(p.ascensore)
-                        elevators[p.b.piano.numero_di_piano].append(p.ascensore)
-                elif p.scala != '':
-                        stairs[p.a.piano.numero_di_piano].append(p.scala)
-                        stairs[p.b.piano.numero_di_piano].append(p.scala)
-        
-        session['elevators'] = elevators
-        session['stairs'] = stairs
-        
-        return render_to_response('buildings/detail.html', session, context_instance = RequestContext(request))
-    
-
-        
-# ??????????????????????????????????????????????????????????????????????????
-# CHE è STà ROBA???????????????????????????????????????????
-def profile(request):
-        return render_to_response('buildings/profile.html', {'user': request.user}, context_instance = RequestContext(request))
- 
-# vetrina dell'applicazione
-def show(request):
-        return
-
-# Cancellazione di un edificio 
-@login_required
-def delete(request, b_id):
-        
-        building = get_object_or_404(Building, pk=b_id)
-        
-        if building.utente != request.user:
-                raise Http404
-        
-        else:
-               deleteBuilding(building)
-               # aggiungere un return che faccia senso
-        
-
    # Passo 3:
    #    Creazione dei punti e percorsi dei piani in base ai dati forniti in precedenza
    #    Salvataggio di TUTTO
@@ -588,6 +521,100 @@ def delete(request, b_id):
         
  #       return render_to_response('buildings/generate/step'+ str(step) +'.html', session,  context_instance = RequestContext(request))
      
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+
+   
+# Dettaglio di un edificio selezionato nell'index
+def detail(request, building_id):
+        session = {}
+        
+        b = get_object_or_404(Building, pk=building_id)
+        session['building'] = b
+        
+        session['floors'] = Floor.objects.filter(building=building_id).order_by('numero_di_piano')
+       
+        session['points'] = Point.objects.filter(building=building_id).order_by('piano')
+        
+        temp_rooms = Room.objects.filter(building=building_id) 
+        ordered_rooms = {}
+        for r in temp_rooms:
+        
+                if not ordered_rooms.has_key(r.punto.piano.numero_di_piano):
+                        ordered_rooms[r.punto.piano.numero_di_piano] = []   
+                
+                ordered_rooms[r.punto.piano.numero_di_piano].append(r)
+                                
+        session['rooms'] = ordered_rooms
+        
+        
+        paths = Path.objects.filter(building=building_id)
+        
+        elevators = {}
+        stairs = {}
+        
+        for p in paths:
+                
+                if not elevators.has_key(p.a.piano.numero_di_piano):
+                        elevators[p.a.piano.numero_di_piano] = []
+                        
+                if not elevators.has_key(p.b.piano.numero_di_piano):
+                        elevators[p.b.piano.numero_di_piano] = []
+                        
+                if not stairs.has_key(p.a.piano.numero_di_piano):
+                        stairs[p.a.piano.numero_di_piano] = []
+                        
+                if not stairs.has_key(p.b.piano.numero_di_piano):
+                        stairs[p.b.piano.numero_di_piano] = []
+                        
+                if p.ascensore != '':
+                        elevators[p.a.piano.numero_di_piano].append(p.ascensore)
+                        elevators[p.b.piano.numero_di_piano].append(p.ascensore)
+                elif p.scala != '':
+                        stairs[p.a.piano.numero_di_piano].append(p.scala)
+                        stairs[p.b.piano.numero_di_piano].append(p.scala)
+        
+        session['elevators'] = elevators
+        session['stairs'] = stairs
+        
+        return render_to_response('buildings/detail.html', session, context_instance = RequestContext(request))
+    
+
+        
+# ??????????????????????????????????????????????????????????????????????????
+# CHE è STà ROBA???????????????????????????????????????????
+def profile(request):
+        return render_to_response('buildings/profile.html', {'user': request.user}, context_instance = RequestContext(request))
+ 
+# vetrina dell'applicazione
+def show(request):
+        return
+
+# Cancellazione di un edificio 
+@login_required
+def delete(request, b_id):
+        
+        building = get_object_or_404(Building, pk=b_id)
+        
+        if building.utente != request.user:
+                raise Http404
+        
+        else:
+               deleteBuilding(building)
+               # aggiungere un return che faccia senso
+        
+
      
      
 

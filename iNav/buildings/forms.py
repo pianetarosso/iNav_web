@@ -267,6 +267,176 @@ class StepFourForm(ModelForm):
                         
                # MANCA VERIFICA CHE L'IMMAGINE SIA ABBASTANZA VICINA ALL'EDIFICIO
 
+
+# STEP 5: #####################################################################################
+#       - POINT
+#       - ROOM
+#       - PATH
+
+# FORM DEL PUNTO:
+#       - RFID        
+#       - INGRESSO
+#       - X
+#       -Y
+#       - ID TEMPORANEO
+#       - NUMERO DI PIANO (TEMPORANEO)
+class StepFivePointForm(forms.ModelForm):
+        
+        # id temporaneo, mi serve per fare le connessioni con paths e rooms
+        temp_id = forms.IntegerField(widget=forms.HiddenInput());
+        
+        # numero di piano, poi dovrò sostituirlo con l'oggetto piano
+        temp_piano = forms.IntegerField(widget=forms.HiddenInput());
+        
+        class Meta:
+                model = Point
+                
+                exclude = ('building', 'id', 'piano')
+                widgets = {
+                        'RFID' : HiddenInput(),
+                        'x' : HiddenInput(),
+                        'y' : HiddenInput(),
+                        'ingresso' : HiddenInput(),
+                } 
+
+        
+        def clean(self):
+                
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+                
+                ingresso = self.cleaned_data['ingresso']
+                        
+                x = self.cleaned_data['x']
+                y = self.cleaned_data['y']
+                temp_id = self.cleaned_data['temp_id']
+                temp_piano = self.cleaned_data['temp_piano']
+           
+                
+                return self.cleaned_data
+
+# FORMSET DEL PUNTO:
+class StepFivePointFormSet(BaseFormSet):
+        def clean(self):
+                
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+      
+                floors = {}
+                ids = []
+                rfid = []
+                
+                #old_building = None
+                
+                for i in range(0, self.total_form_count()):
+                
+                        form = self.forms[i]
+                       
+                        f_id = form.cleaned_data.get('temp_piano')
+                        temp_id = form.cleaned_data.get('temp_id')
+                        
+                        x = form.cleaned_data.get('x')
+                        y = form.cleaned_data.get('y')
+                        
+                        RFID = form.cleaned_data.get('RFID')
+                         
+                        # verifico che non ci siano duplicazioni di id
+                        if temp_id in ids:
+                                raise forms.ValidationError("Incorrect ids!!!")
+                        ids.append(temp_id) 
+                        
+                        # verifico che non ci siano duplicazioni di RFID
+                        if RFID in rfid:
+                               raise forms.ValidationError("Duplicated RFID!!!") 
+                        if RFID != '':
+                                rfid.append(RFID)
+                       
+                        # verifico che non esistano marker con le stesse coordinate 
+                        # sullo stesso piano
+                        if floors.has_key(f_id):
+                                lista = floors[f_id]
+                                
+                                if (x, y) in lista:
+                                        raise forms.ValidationError("Markers overlap!!!") 
+                                
+                                floors[f_id].append((x, y))
+                               
+                        else:
+                                floors[f_id] = [(x, y)]
+                               
+             
+                return self.cleaned_data
+
+
+# FORM DELLA PATH:
+#       - ASCENSORE
+#       - SCALA
+#       - ID TEMPORANEO PUNTO A
+#       - ID TEMPORANEO PUNTO B
+class StepFivePathForm(forms.ModelForm):
+
+        # faccio l'override per avere dei valori integer al posto degli oggetti piano
+        temp_a = forms.IntegerField(widget=forms.HiddenInput())
+        temp_b = forms.IntegerField(widget=forms.HiddenInput())
+        
+        class Meta:
+                model = Path
+                
+                exclude = ('building', 'id', 'a', 'b')
+                widgets = {
+                        'ascensore' : HiddenInput(),  
+                        'scala' : HiddenInput()
+                } 
+ 
+        
+        def clean(self):
+                
+                if any(self.errors):
+                        # Don't bother validating the formset unless each form is valid on its own
+                        return
+      
+                a = self.cleaned_data['temp_a']
+                b = self.cleaned_data['temp_b']
+                
+                ascensore = self.cleaned_data['ascensore']
+                scala= self.cleaned_data['scala']
+                
+                # verifico che i due punti non siano uguali, se non sono una scala o un ascensore
+                if (ascensore == '' and scala == '' and a == b):
+                        raise forms.ValidationError("Points not correct!!!")
+                
+                return self.cleaned_data
+
+
+
+# FORM DELLA STANZA:
+#       - NOME
+#       -PERSONE
+#       - ALTRO
+#       - LINK
+#       - ID TEMPORANEO PUNTO
+class StepFiveRoomForm(forms.ModelForm):
+        
+        # faccio l'override per avere un valore integer al posto dell'oggetto point
+        punto = forms.IntegerField(widget=forms.HiddenInput())    
+                
+        class Meta:
+                model = Room
+                
+                exclude = ('building', 'id', 'punto')
+                widgets = {
+                        'nome_stanza' : HiddenInput(),
+                        'persone' : HiddenInput(),  
+                        'altro' : HiddenInput(),
+                        'link' : HiddenInput()
+                }   
+
+#####################################################################################################
+
+
+
 #########################################################################################################
 
 
@@ -397,39 +567,7 @@ class BaseAlternateFloorFormSet(BaseFormSet):
 
 #############################################################################################
 
-# FORM DEL PUNTO
-class PointForm(forms.ModelForm):
-        
-        temp_id = forms.IntegerField(widget=forms.HiddenInput());
-        temp_piano = forms.IntegerField(widget=forms.HiddenInput());
-        
-        class Meta:
-                model = Point
-                
-                exclude = ('building', 'id', 'piano')
-                widgets = {
-                        'RFID' : HiddenInput(),
-                        'x' : HiddenInput(),
-                        'y' : HiddenInput(),
-                        'ingresso' : HiddenInput(),
-                } 
 
-        
-        def clean(self):
-                
-                if any(self.errors):
-                        # Don't bother validating the formset unless each form is valid on its own
-                        return
-                
-                ingresso = self.cleaned_data['ingresso']
-                        
-                x = self.cleaned_data['x']
-                y = self.cleaned_data['y']
-                temp_id = self.cleaned_data['temp_id']
-                temp_piano = self.cleaned_data['temp_piano']
-           
-                
-                return self.cleaned_data
         
         
                 
@@ -490,58 +628,10 @@ class PointFormSet(BaseFormSet):
  #################################################################################################     
           
           
-# FORM DELLA PATH
-class PathForm(forms.ModelForm):
 
-        # faccio l'override per avere dei valori integer al posto degli oggetti piano
-        temp_a = forms.IntegerField(widget=forms.HiddenInput())
-        temp_b = forms.IntegerField(widget=forms.HiddenInput())
-        
-        class Meta:
-                model = Path
-                
-                exclude = ('building', 'id', 'a', 'b')
-                widgets = {
-                        'ascensore' : HiddenInput(),  
-                        'scala' : HiddenInput()
-                } 
- 
-        
-        def clean(self):
-                
-                if any(self.errors):
-                        # Don't bother validating the formset unless each form is valid on its own
-                        return
-      
-                a = self.cleaned_data['temp_a']
-                b = self.cleaned_data['temp_b']
-                
-                ascensore = self.cleaned_data['ascensore']
-                scala= self.cleaned_data['scala']
-                
-                # verifico che i due punti non siano uguali, se non sono una scala o un ascensore
-                if (ascensore == '' and scala == '' and a == b):
-                        raise forms.ValidationError("Points not correct!!!")
-                
-                return self.cleaned_data
         
  #################################################################################################     
      
      
-# FORM DELLA STANZA
-class RoomForm(forms.ModelForm):
-        
-        # faccio l'override per avere un valore integer al posto dell'oggetto point
-        punto = forms.IntegerField(widget=forms.HiddenInput())    
-                
-        class Meta:
-                model = Room
-                
-                exclude = ('building', 'id', 'punto')
-                widgets = {
-                        'nome_stanza' : HiddenInput(),
-                        'persone' : HiddenInput(),  
-                        'altro' : HiddenInput(),
-                        'link' : HiddenInput()
-                }   
+
                 
