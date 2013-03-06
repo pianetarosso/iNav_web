@@ -28,14 +28,17 @@ function enableInputs() {
         
 // Creazione di un nuovo marker
 function createNewMarker(id, x, y, piano) {
- 
-        this.id = parseInt(id);
-        this.x = parseInt(x);
-        this.y = parseInt(y);
-        this.piano = parseInt(piano)
-        form.new_marker();
+        form.new_marker(id, x, y, piano);
 }
-        
+    
+// Comunico alla JAPPLET che ho concluso le operazioni
+//      - saved         => booleano: "l'ho salvato?"
+//      - id            => integer: ID
+//      - type          => 'marker' o 'path' 
+//      - access        => booleano: 'è un ingresso/ascensore/scala?'
+function operationComplete(saved, id, type, access) {
+        mapGenerator.operationComplete(saved, id, type, access);
+}    
         
 //////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////

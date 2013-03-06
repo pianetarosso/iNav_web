@@ -19,6 +19,10 @@ function pointList() {
         function add(rfid, x, y, floor_n, access, id) {
                 list[id] = new point(rfid, x, y, floor_n, access, id);
                 list[id].save();
+                
+                // aggiorno la lista di RFID
+                if (rfid != '')
+                        RFID.push(rfid);
         }
         
         // recupero un punto
@@ -30,7 +34,14 @@ function pointList() {
         // aggiorno un punto
         this.update = update;
         function update(rfid, x, y, floor_n, access, id) {
+        
+                var old_rfid = RFID.indexOf(list[id].rfid);
+                
                 list[id].update(rfid, x, y, floor_n, access, id);
+                
+                 // aggiorno la lista di RFID
+                delete RFID[old_rfid];
+                RFID.push(rfid);
         }
         
         // cancello un punto, e sistemo anche i numeri incrementali
@@ -39,6 +50,9 @@ function pointList() {
         
                 // cancello il div
                 list[id].delete_();
+                
+                // aggiorno la lista di RFID
+                delete RFID[RFID.indexOf(list[id].rfid)];
                 
                 // cancello l'elemento dalla lista
                 delete list[id];
@@ -321,6 +335,7 @@ function roomList() {
         function add(point_id, nome, link, people, notes) {
                 list[point_id] = new room_(point_id, nome, link, people, notes);
                 list[point_id].save();
+                room.push(nome);
         }
         
         // recupero una stanza
@@ -332,7 +347,13 @@ function roomList() {
         // aggiorno una stanza
         this.update = update;
         function update(point_id, nome, link, people, notes) {
+        
+                var old_name = room.getIndexOf(list[point_id].nome);
+                
                 list[point_id].update(point_id, nome, link, people, notes);
+                
+                delete room[old_name];
+                room.push(nome);
         }
         
         // cancello una stanza, e sistemo anche i numeri incrementali
@@ -341,6 +362,8 @@ function roomList() {
         
                 // cancello il div
                 list[point_id].delete_();
+                
+                delete room[room.getIndexOf(list[point_id].nome)];
                 
                 // cancello l'elemento dalla lista
                 delete list[point_id];
@@ -607,6 +630,83 @@ function room_(point_id, nome, link, people, notes) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // PATH //
+
+
+
+
+// GESTORE DELLA LISTA DI PUNTI
+function pathList() {
+
+        // { [point_a, point_b] : room }
+        list = {};
+        
+        
+        // aggiungo un percorso
+        this.add = add;
+        function add(point_a, point_b, lift, stair) {
+        
+                var id = [point_a, point_b];
+                list[id] = new path(point_a, point_b, lift, stair);
+                list[id].save();
+        }
+        
+        // recupero un percorso
+        this.get = get;
+        function get(id_a, id_b) {
+        
+                return list[ [id_a, id_b] ];
+        }
+        
+        // aggiorno un percorso
+        this.update = update;
+        function update(point_a, point_b, lift, stair) {
+        
+                var id = [point_a, point_b];
+                list[id].update(point_a, point_b, lift, stair);
+        }
+        
+        // cancello un percorso, e sistemo anche i numeri incrementali
+        this.del = del;
+        function del(id_a, id_b) {
+        
+                var id = [id_a, id_b];
+                
+                // cancello il div
+                list[id].delete_();
+                
+                // cancello l'elemento dalla lista
+                delete list[id];
+                
+                // aggiorno i numeri incrementali dei "sopravvissuti"
+                var counter = 0;
+                for ( l in list) {
+                        list[l].changeDivNumber(counter);
+                        counter++;
+                }
+        }
+        
+        // carico tutti i div presenti
+        this.load = load
+        function load() {
+                
+                var n = new path().getTotal();
+                
+                if (n == null)
+                        return;
+                
+                for (var i=0; i < n; i++) {
+                
+                        // carico il div corrispondente
+                        p = new path().load(i);
+                        
+                        var id = [p.point_a, p.point_b];
+                        list[id] = p;
+                        
+                        return list;
+                }
+        
+        }
+}        
 
 
 

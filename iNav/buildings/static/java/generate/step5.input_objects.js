@@ -57,7 +57,7 @@ function manageRFID() {
         // restituisce se il valore dell'RFID è valido o meno
         this.isValid = isValid;
         function isValid() {
-                return !checkBox.checked || isvalid;
+                  return !checkBox.checked || isvalid;
         }
         
         // resituisce se l'oggetto è usato o no
@@ -157,7 +157,7 @@ function manageRoom() {
                 validate();
                
                 container.hide();
-         }
+        }
         
         // metodo per restituire i valori
         this.value = value;
@@ -260,8 +260,12 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
         function validate() {
                 var value = text.value;
                 var array = lista_controllo()[selected_floor];
-                
-                isvalid = (list.selectedIndex != 0) || ((array.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null));
+               
+                if ((array.length == 0) || (list.selectedIndex == 0))
+                        isvalid = (value != '') && (value.match(/\S/) != null);
+                        
+                else        
+                        isvalid = (array.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null);
                 
                 if (isvalid) 
                         text.style.background = "";
@@ -350,7 +354,7 @@ function marker_data() {
         function clear() {
                 access.checked = false;
                 rfid.clear();
-          //      room_o.clear():
+                room_o.clear();
                 lift_o.clear();
                 stair_o.clear();
         }
@@ -365,7 +369,7 @@ function marker_data() {
                 var l = !lift_o.isChecked() || lift_o.isValid();
                 var s = !stair_o.isChecked() || stair_o.isValid();
                 
-                return (rfid.isChecked() || access.checked) & r & l & s;        
+                return (rfid.isValid() & r & l & s ) && (access.checked || rfid.isChecked() || room_o.isChecked() || lift_o.isChecked() || stair_o.isChecked());        
         }
         
         // recupero i dati
