@@ -742,9 +742,9 @@ def parseBuilding(b):
 def parseFloor(f):
         
         floor = {
-                'numero_di_piano' : f.numero_di_piano,
+                'numero_di_piano' : str(f.numero_di_piano),
                 'bearing' : str(f.bearing),
-                'id' : f.pk,
+                'id' : str(f.pk),
                 'immagine' : f.immagine.url
         } 
         

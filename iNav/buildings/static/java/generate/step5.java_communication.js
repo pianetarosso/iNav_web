@@ -16,8 +16,8 @@ function getFloors() {
                 floors.push(parseInt(json[j].numero_di_piano));
                 lift[parseInt(json[j].numero_di_piano)] = [];
                 stair[parseInt(json[j].numero_di_piano)] = [];
-        }
-        
+        }    
+        console.log(json);
         return json;
 }
         
@@ -37,7 +37,7 @@ function createNewMarker(id, x, y, piano) {
 //      - type          => 'marker' o 'path' 
 //      - access        => booleano: 'è un ingresso/ascensore/scala?'
 function operationComplete(saved, id, type, access) {
-        mapGenerator.operationComplete(saved, id, type, access);
+        mapGenerator.operationComplete(saved, id + '', type, access);
 }    
         
 //////////////////////////////////////////////////////////////////////////////////////////////
