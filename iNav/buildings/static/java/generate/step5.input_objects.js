@@ -10,7 +10,14 @@ function manageRFID() {
         var text = document.getElementById("RFID_text");
         var s_text = new showHide("RFID_input");
         
+        // indica la validità del campo
         var isvalid = false;
+        
+        // usato se si è in modalità editing. 
+        // indica che questo campo non è da verificare per la validità
+        var esclude = null;
+        
+        
         
         // inizializzo l'oggetto
         initialize();
@@ -35,7 +42,7 @@ function manageRFID() {
          function validateText() {
                 var value = text.value;
                 
-                isvalid = (value != '') && (RFID.indexOf(value) == -1) && (value.match(/\S/) != null);
+                isvalid = (esclude == value) || ((value != '') && (rfid_l.indexOf(value) == -1) && (value.match(/\S/) != null));
                 
                 if (isvalid) 
                         text.style.background = "";
@@ -50,6 +57,7 @@ function manageRFID() {
          function clear() {
                 checkBox.checked = false;
                 text.value = '';
+                esclude = null;
                 s_text.hide();
                 validateText();
          }
@@ -61,15 +69,25 @@ function manageRFID() {
         }
         
         // resituisce se l'oggetto è usato o no
-        this.isChecked = isChecked
+        this.isChecked = isChecked;
         function isChecked() {
                 return checkBox.checked;
         }
         
         // recupero il valore dell'RFID
-        this.value = value
+        this.value = value;
         function value() {
                 return text.value;
+        }
+        
+        // metodo per riempire il campo
+        this.edit = edit;
+        function edit(value) {
+                
+                if (value != '') {
+                        checkbox.checked = true;
+                        s_text.value = value;
+                }
         }
 }
 
@@ -90,6 +108,9 @@ function manageRoom() {
         var container = new showHide("room_input");
         
         var isvalid = false;
+        
+        var esclude = null;
+        
         
         this.initialize = initialize;
         function initialize(access, lift_o, stair_o) {
@@ -118,8 +139,10 @@ function manageRoom() {
         
         // validazione dell'input
         function validate() {
+        
                 var value = name.value;
-                isvalid = (room.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null);
+                
+                isvalid = (value == esclude) || ((room_l.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null));
                 
                 if (isvalid) 
                         name.style.background = "";
@@ -154,6 +177,9 @@ function manageRoom() {
                 link.value = '';
                 people.value = '';
                 note.value = '';
+                
+                esclude = null;
+                
                 validate();
                
                 container.hide();
@@ -163,6 +189,21 @@ function manageRoom() {
         this.value = value;
         function value() {
                 return [name.value, link.value, people.value, note.value];
+        }
+        
+        // metodo per riempire il campo
+        this.edit = edit;
+        function edit(nome, link, people, note) {
+                
+                if (nome != '') {
+                        checkbox.checked = true;
+                        name.value = nome;
+                        link.value = link;
+                        people.value = people;
+                        note.value = notes;
+                        
+                        esclude = nome;
+                }
         }
 }
 
@@ -187,15 +228,16 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
         
         var lista_controllo;
         
-        
+        var esclude = null;
         
         var isvalid = false;
         
+        
         function lista_controllo() {
                 if (id_lista == 'stair')
-                        return stair;
+                        return stair_l;
                 else
-                        return lift;
+                        return lift_l;
         }
         
         this.initialize = initialize;
@@ -260,12 +302,14 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
         function validate() {
                 var value = text.value;
                 var array = lista_controllo()[selected_floor];
-               
+                console.log(lista_controllo());
+                console.log(array);
+                console.log(selected_floor);
                 if ((array.length == 0) || (list.selectedIndex == 0))
                         isvalid = (value != '') && (value.match(/\S/) != null);
                         
                 else        
-                        isvalid = (array.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null);
+                        isvalid = (value == esclude) || ((array.indexOf(value) == -1) && (value != '') && (value.match(/\S/) != null));
                 
                 if (isvalid) 
                         text.style.background = "";
@@ -299,6 +343,8 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
                 text.value = '';
                 list.selectedIndex = 0;
                 
+                esclude = null;
+                
                 // elimino le options create
                 var children = list.children;
                 for (var i=1; i < children.length; i++)    
@@ -316,6 +362,16 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
                         return list.value;
                 else
                         return text.value;
+        }
+        
+        // metodo per riempire il campo
+        this.edit = edit;
+        function edit(value) {
+                
+                if (value != '') {
+                        checkbox.checked = true;
+                        s_text.value = value;
+                }
         }
 }
 
@@ -353,6 +409,7 @@ function marker_data() {
         this.clear = clear
         function clear() {
                 access.checked = false;
+                access.disabled = false;
                 rfid.clear();
                 room_o.clear();
                 lift_o.clear();
@@ -394,6 +451,16 @@ function marker_data() {
                         valued['stair'] = stair_o.value();         
                 
                 return value;
+        }
+        
+        // imposto i valori dei campi per consentire l'editing
+        this.edit = edit;
+        function edit(RFID, access_, stair, lift, room_name, room_people, room_link, room_other) {
+                rfid.edit(RFID);
+                lift_o.edit(lift);
+                stair_o.edit(stair);
+                room_o.edit(room_name, room_link, room_people, room_other);
+                access = access_;
         }
 }
 

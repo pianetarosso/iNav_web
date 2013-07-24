@@ -8,7 +8,7 @@
 </script>
 
 <script type="text/javascript"
-        src="{{STATIC_URL}}java/generate/step5.base_objects.js">
+        src="{{STATIC_URL}}java/generate/step5.form.js">
 </script>
 
 <script type="text/javascript"
@@ -24,25 +24,15 @@
         
         GET_FLOORS = '{% url buildings.views.getFloors building_id=building %}';
         
-        //////////////////////////////////
-        // ARRAY DI CONTROLLO!!!!!
-
-        // array degli RFID
-        RFID = [];
-        
-        // lista degli ascensori
-        lift = {};
-        
-        // lista delle scale
-        stair = {};       
-        
-        // lista delle stanze
-        room = []; 
-        
-        //////////////////////////////////
         
         // form di input
         form;
+        
+        // Array delle liste di esclusione
+        var rfid_l = [];
+        var lift_l = {};
+        var stair_l = {};
+        var room_l = [];
         
         // array dei numeri di piano
         floors = [];
@@ -50,361 +40,18 @@
         // piano selezionato
         selected_floor = undefined;
         
-        /////////////////////////////////
-        // OGGETTI BASE
         
-        point_l = undefined;
-        room_l = undefined;
         
         
         // END VARIABILI
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         
-        
-        
-        // gestione della form di input
-        function form() {
-              
-                var loading = document.getElementById("loading");
-                
-                var operation = document.getElementById("operation_type");
-                
-                var floor_list = document.getElementById("floor_number");
-                
-                var commands = new showHide("commands_input");
-                
-                var marker = new showHide("marker_input");
-               
-                var marker_d = new marker_data();  
-                
-                var save_buttons = new saveButtons(marker_d);                         
-                this.save_buttons = save_buttons;       
-                
-                // funzione chiamata al termine del caricamento della JApplet
-                this.loaded = loaded;
-                function loaded() {
-                        
-                        // nascondo il "loading..."
-                        loading.hidden = true;
-                        
-                        // abilito il campo "operazioni" e imposto la funzione chiamata
-                        operation.disabled = false;
-                        operation.selectedIndex = 0;
-                        operation.onchange = function() {
-                                mapGenerator.setOperation(operation.value);
-                        };
-                        
-                        // abilito e popolo il campo "numero di piani"
-                        floor_list.disabled = false;
-                        var first = true;
-                        for (f in floors) {
-                                var newoption = document.createElement('option');
-                                newoption.value = floors[f];
-                                newoption.text = 'Floor: ' + floors[f];
-                                if (first) {
-                                        newoption.selected = "selected";  
-                                        selected_floor = floors[f];
-                                }    
-                                first = false;
-                                floor_list.appendChild(newoption);        
-                        }
-                        // aggiungo l'ascoltatore per l'operazione
-                        floor_list.onchange = function() {
-                                mapGenerator.setFloor(floor_list.value);
-                                selected_floor = floor_list.selected;
-                        }
-                        
-                        commands.show(); 
-                }
-                
-                //////////////////////////////////////
-                // NUOVO MARKER
-                
-                function cancel_new_marker(id) {
-                
-                        this.go = go;
-                        function go() {
-                                operationComplete(false, id, 'marker', false);
-                                marker_d.clear();
-                                marker.hide();
-                        }         
-                }
-               
-                function save_new_marker(id, x, y, piano) {
-                
-                        this.go = go;
-                        function go() {
-                        
-                                if (marker_d.isValid()) {
-                                
-                                        // recupero i dati
-                                        var data = marker_d.value();
-                                        
-                                        // salvo il PUNTO nella POINTLIST
-                                        var rfid = '';
-                                        if (data['RFID'] != undefined)
-                                                rfid = data['RFID'];
-                                                
-                                        var access = (data['access'] != undefined);
-                                               
-                                        point_l.add(rfid, x, y, piano, access, id);
-                                         
-                                        // abbiamo una stanza per le mani
-                                        if (data['room'] != undefined) {
-                                                room = data['room'];
-                                                room_l.add(id, room[0], room[1], room[2], room[3]);
-                                        }
-                                        
-                                        // AGGIUNGERE SUPPORTO ASCENSORI E SCALE///
-                                        if (data['lift'] != undefined) {
-                                                alert('LIFT!');
-                                        }
-                                        
-                                        if (data['stair'] != undefined) {
-                                                alert('STAIR!');
-                                        }
-                                        /////////////////////////////////////////////
-                                        
-                                        operationComplete(true, id, 'marker', access);
-                                        marker_d.clear();
-                                        marker.hide();
-                                }
-                                else
-                                        alert("System error! Try to reload the page...");
-                        }
-                }
-                ////////////////////////////////////////
-                
-                
-                this.new_marker = new_marker;
-                function new_marker(id, x, y, piano) {
-                
-                        // pulisco l'input
-                        marker_d.clear();
-                        
-                        // mostro l'input
-                        marker.show(); 
-                        
-                        // mostro i pulsanti "ok" e "cancel"
-                        save_buttons.new_marker(new save_new_marker(id, x, y, piano), new cancel_new_marker(id));
-                        
-                        // lancio la validazione
-                       // checkIfValid(true); 
-                }
-        }
-       
-        function saveButtons(marker_d) {
-        
-                // CONTENITORI:
-                
-                // contenitore pulsanti "save", "cancel", "delete"
-                var buttons = new showHide("buttons_input");
-                
-                // contenitore pulsanti "are you sure?", "cancel"
-                var question = new showHide("question_input");
-               
-                //////////////////////////////////////////////////////
-                
-                
-                // PULSANTI:
-                
-                // save
-                var save = document.getElementById("save");
-                
-                // cancel
-                var cancel = document.getElementById("cancel");
-                
-                // delete
-                var deletem = document.getElementById("delete");   
-                
-                // "are you sure?"
-                var iAmSure = document.getElementById("proceed");
-                
-                // "no, I'm not sure"
-                var goBack = document.getElementById("go_back");     
-                
-                /////////////////////////////////////////////////////
-                
-                // variabile di controllo cel check
-                var check = true;
-                
-                // funzione per la validazione dell'input (e abilitare il pulsante "save")
-                // verifico sia che i campi siano validi, sia che siano abilitati
-                this.checkIfValid = checkIfValid;
-                function checkIfValid() {
-                        save.disabled = !marker_d.isValid();
-                        setTimeout("form.save_buttons.checkIfValid()", 1000);
-                }
-                
-                // funzione per resettare i campi e i pulsanti
-                function reset() {
-                        
-                        // nascondo i campi
-                        buttons.hide();
-                        question.hide();
-                        
-                        // elimino gli ascoltatori onclick sui pulsanti
-                        save.onclick = '';
-                        cancel.onclick = '';
-                        deletem.onclick = '';
-                        iAmSure.onclick = '';
-                        goBack.onclick = '';
-                        
-                        // reimposto alcuni valori
-                        save.disabled = true;
-                        save.hidden = false;
-                        deletem.hidden = true;
-                        
-                        check = false;
-                }
-                
-                // chiamata per la cancellazione di una path
-                function delete_path() {
-                
-                        save.hidden = true;
-                        buttons.show();
-                
-                        
-                        cancel.onclick = function() {
-                                // chiamo il metodo della form per 'pulire' tutto e abilitare l'applet
-                                reset();
-                        }
-                        
-                        deletem.onclick = function() {
-                                
-                                buttons.hide();
-                                
-                                // mostro la domanda
-                                question.show();
-                                
-                                iAmSure.onclick = function() {
-                                        
-                                        // chiamo il metodo della form per cancellare la path
-                                        // pulisco tutto
-                                        // abilito l'applet
-                                        reset();
-                                };
-                                
-                                
-                                goBack.onclick = function() {
-                                        
-                                        // resetto tutto e abilito la japplet
-                                        reset();  
-                                };
-                        
-                        };
-                
-                }
-                
-                
-                
-                // chiamata nella creazione di un nuovo marker
-                // cancel => funzione di cancellazione
-                // save => funzione salvataggio
-                this.new_marker = new_marker;
-                function new_marker(save_f, cancel_f) {
-                        
-                        buttons.show();
-                        checkIfValid();
-                        
-                        cancel.onclick = function() {
-                                cancel_f.go();
-                                reset();
-                        }
-                        
-                        save.onclick = function() {
-                                save_f.go();
-                                reset();
-                        }
-                }
-                
-                // chiamata per l'editing di un marker
-                function edit_marker() {
-                        
-                        deletem.hidden = false;
-                        buttons.show();
-                        
-                        save.onclick = function() {
-                                // chiamo il metodo della form per aggiornare tutto
-                                reset();
-                        };
-                
-                        cancel.onclick = function() {
-                        
-                                // chiamo il metodo della form per 'pulire' tutto 
-                                // NON cancello il punto, ma devo abilitare di nuovo la mappa
-                                reset();
-                        };
-                        
-                        deletem.onclick = function() {
-                                
-                                buttons.hide();
-                                
-                                // mostro la domanda
-                                question.show();
-                                
-                                iAmSure.onclick = function() {
-                                        
-                                        // chiamo il metodo della form per cancellare un marker
-                                        // pulisco tutto
-                                        // abilito l'applet
-                                        reset();
-                                };
-                                
-                                
-                                goBack.onclick = function() {
-                                        
-                                        question.hide();
-                                        buttons.show();
-                                        
-                                        iAmSure.onclick = '';
-                                        goBack.onclick = '';   
-                                };
-                        
-                        };
-                
-                }
-        
-        }
-         
-       
-        
-        
-        
-        
-        
-
-      
-  
-        
-        
-  
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+   
         
         
         
         ////////////////////////////////////////////////////////////////////////////////////////////////
         function initialize() { 
-        
-                // inizializzo gli oggetti base
-                point_l = new pointList();
-                room_l = new roomList();
                 
                 // manca caricamento dei dati
                 
@@ -424,9 +71,9 @@
 <body onload="initialize()">    
 
         
-<object classid="java:main.MapGenerator.class" 
+<object classid="java:mapGenerator.MapGenerator.class" 
         type="application/x-java-applet"
-        archive="{{STATIC_URL}}jar/MapGenerator.jar"
+        archive="{{STATIC_URL}}jar/MapGenerator5.jar"
         name="mapGenerator"
         id="draw_canvas"
         MAYSCRIPT="true"
@@ -450,8 +97,7 @@
         Select which object add:
         <!-- OPERATION TYPE -->
         <select id="operation_type" disabled="true"  name="commands">
-                <option value="none" selected="selected">None</option>
-                <option value="marker">Marker</option>
+                <option value="marker" selected="selected">Marker</option>
                 <option value="path" >Path</option>          
         </select>
         </br></br>

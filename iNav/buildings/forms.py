@@ -54,7 +54,7 @@ class StepOneForm(ModelForm):
                 image = self.cleaned_data.get('foto')
                         
                 if image:
-                        if image._size > MAX_IMAGE_SIZE:
+                        if image._size > settings.MAX_IMAGE_SIZE:
                                 raise ValidationError("Image file too large ( maximum 3 Mb )")
                         return image
                 else:
@@ -80,7 +80,8 @@ class StepTwoForm(ModelForm):
                         'nome',
                         'descrizione',
                         'link',
-                        'foto'
+                        'foto',
+                        'base_bearing'
                 )
                 
                 widgets = {
@@ -173,6 +174,7 @@ class StepThreeForm(ModelForm):
                         'bearing', 
                         'zoom_on_map', 
                         'posizione_immagine', 
+                        'zoom_of_map'
                 )
                 
                 # verifico che l'immagine sia leggibile e la sua dimensione non superi i 3 Mb                
@@ -181,7 +183,7 @@ class StepThreeForm(ModelForm):
                         image = self.cleaned_data.get('immagine')
                         # AGGIUNGERE VALIDAZIONE PER IMMAGINE TROPPO PICCOLA!!!!!!!!!!!!!!
                         if image:
-                                if image._size > MAX_IMAGE_SIZE:
+                                if image._size > settings.MAX_IMAGE_SIZE:
                                         raise ValidationError("Image file too large ( maximum 3 Mb )")
                                 return image
                         else:
@@ -195,6 +197,7 @@ class StepThreeFormSet(BaseFormSet):
         def clean(self):
                 
                 if any(self.errors):
+                        print str(self.errors)
                         # Don't bother validating the formset unless each form is valid on its own
                         return
           
@@ -277,7 +280,7 @@ class StepFourForm(ModelForm):
 #       - RFID        
 #       - INGRESSO
 #       - X
-#       -Y
+#       - Y
 #       - ID TEMPORANEO
 #       - NUMERO DI PIANO (TEMPORANEO)
 class StepFivePointForm(forms.ModelForm):

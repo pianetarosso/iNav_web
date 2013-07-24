@@ -175,7 +175,7 @@ class UserAdditionalFields(models.Model):
 
         user = models.OneToOneField(User)
         
-        # valore che indica il numero di edifici incompleti per ogni utenti 
+        # valore che indica il numero di edifici incompleti per ogni utente 
         incomplete_buildings = models.IntegerField(null=False, default=0)
         
         # valore che indica gli edifici creati da ogni utente
@@ -186,6 +186,8 @@ class UserAdditionalFields(models.Model):
                 if created:
                         UserAdditionalFields.objects.create(user=instance)
                         
+        # aggiungere controllo per creazione e cancellazione edificio                
+        
         post_save.connect(create_user_profile, sender=User)
         
     

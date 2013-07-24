@@ -107,7 +107,7 @@ def generate_building(request, idb):
         userAdditionaFields = request.user.useradditionalfields
         
         # verifico se l'utente ha già 3 edifici incompleti. in tal caso lo rispedisco alla Home
-        if userAdditionaFields.incomplete_buildings == MAX_TEMPORARY_BUILDINGS:
+        if userAdditionaFields.incomplete_buildings > MAX_TEMPORARY_BUILDINGS:
                 return redirect('buildings.views.index')                        
                        
         # se l'id in input è < 0 vuol dire che sto creando l'edificio ora

@@ -2,7 +2,7 @@
 
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/style.css" />
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.0/jquery.min.js"></script> 
+<script src="{{STATIC_URL}}java/common/jquery.min.js"></script> 
 
 
 <script> 
@@ -18,8 +18,10 @@
         
         // funzione per cambiare il colore dei link di navigazione in base a che pagina è visualizzata
         function changeLinkColor(place) {  
-                link = document.getElementById(place + "_link");
-                link.style.color = "#ff8800";  
+                try {
+                        link = document.getElementById(place + "_link");
+                        link.style.color = "#ff8800";
+                } catch (err) {};
         }
         
 </script>  
