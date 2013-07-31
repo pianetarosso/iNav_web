@@ -1,4 +1,7 @@
 // gestione della form di input
+
+var marker;
+
         function form() {
               
                 var loading = document.getElementById("loading");
@@ -9,7 +12,7 @@
                 
                 var commands = new showHide("commands_input");
                 
-                var marker = new showHide("marker_input");
+                marker = new showHide("marker_input");
                
                 var marker_d = new marker_data();
                              
@@ -63,6 +66,7 @@
                                 cancelNewMarker();
                                 marker_d.clear();
                                 marker.hide();
+                                commands.show();
                         }         
                 }
                
@@ -111,6 +115,7 @@
                                         saveNewMarker(rfid, access, lift, stair, room_name, room_people, room_link, room_other);
                                         marker_d.clear();
                                         marker.hide();
+                                        commands.show();
                                 }
                                 else
                                         alert("System error! Try to reload the page...");
@@ -167,6 +172,7 @@
                                         saveEditMarker(rfid, access, lift, stair, room_name, room_people, room_link, room_other);
                                         marker_d.clear();
                                         marker.hide();
+                                        commands.show()
                                 }
                                 else
                                         alert("System error! Try to reload the page...");
@@ -181,6 +187,7 @@
                                 deleteMarker();
                                 marker_d.clear();
                                 marker.hide();
+                                commands.show();
                         } 
                 }
                 
@@ -191,7 +198,11 @@
                 
                 
                 this.edit_marker = edit_marker;
-                function edit_marker(data) {
+                function edit_marker(RFID, access, stair, elevator, room_name, room_people, room_link, room_other) {
+                        
+                        loadControlLists();
+                        
+                        commands.hide();
                         
                         // pulisco l'input
                         marker_d.clear();
@@ -200,7 +211,7 @@
                         marker.show();
                         
                         // popolo i campi
-                        marker.edit(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+                        marker_d.edit(RFID, access, stair, elevator, room_name, room_people, room_link, room_other);
                         
                         save_buttons.edit_marker(new save_edit_marker(), new cancel_new_marker(), new delete_marker());
                 }
@@ -210,6 +221,8 @@
                 function new_marker() {
                 
                         loadControlLists();
+                        
+                        commands.hide();
                       
                         // pulisco l'input
                         marker_d.clear();
@@ -351,11 +364,13 @@
                 }
                 
                 // chiamata per l'editing di un marker
+                this.edit_marker = edit_marker;
                 function edit_marker(save_f, cancel_f, delete_f) {
                         
-                        loadControlLists();
+                        checkIfValid();
                         
                         deletem.hidden = false;
+                        deletem.disabled = false;
                         buttons.show();
                         
                         save.onclick = function() {
@@ -373,6 +388,7 @@
                         
                         deletem.onclick = function() {
                                 
+                                marker.hide();
                                 buttons.hide();
                                 
                                 // mostro la domanda
@@ -391,6 +407,7 @@
                                 goBack.onclick = function() {
                                         
                                         question.hide();
+                                        marker.show();
                                         buttons.show();
                                         
                                         iAmSure.onclick = '';

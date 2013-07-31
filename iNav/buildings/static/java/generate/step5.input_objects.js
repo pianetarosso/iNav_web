@@ -15,7 +15,7 @@ function manageRFID() {
         
         // usato se si è in modalità editing. 
         // indica che questo campo non è da verificare per la validità
-        var esclude = null;
+        var esclude = undefined;
         
         
         
@@ -57,7 +57,7 @@ function manageRFID() {
          function clear() {
                 checkBox.checked = false;
                 text.value = '';
-                esclude = null;
+                esclude = undefined;
                 s_text.hide();
                 validateText();
          }
@@ -83,10 +83,14 @@ function manageRFID() {
         // metodo per riempire il campo
         this.edit = edit;
         function edit(value) {
-                
+        
                 if (value != '') {
-                        checkbox.checked = true;
-                        s_text.value = value;
+                        checkBox.checked = true;
+                        s_text.show();
+                        text.value = value;
+                        esclude = value;
+                        
+                        validateText();
                 }
         }
 }
@@ -109,7 +113,7 @@ function manageRoom() {
         
         var isvalid = false;
         
-        var esclude = null;
+        var esclude = undefined;
         
         
         this.initialize = initialize;
@@ -178,7 +182,7 @@ function manageRoom() {
                 people.value = '';
                 note.value = '';
                 
-                esclude = null;
+                esclude = undefined;
                 
                 validate();
                
@@ -203,6 +207,8 @@ function manageRoom() {
                         note.value = notes;
                         
                         esclude = nome;
+                        
+                        validate();
                 }
         }
 }
@@ -228,7 +234,7 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
         
         var lista_controllo;
         
-        var esclude = null;
+        var esclude = undefined;
         
         var isvalid = false;
         
@@ -245,6 +251,7 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
              
                 checkbox.onchange = function() {
                 
+                        
                         // abilito / disabilito gli altri checkbox
                         access.disabled = checkbox.checked;
                         b.disable(checkbox.checked);
@@ -300,12 +307,16 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
         
         // validazione dell'input
         function validate() {
-                var value = text.value;
+        
+                if (list.selectedIndex != 0)
+                        value = list.value;
+                else
+                        value =  text.value;
+                                
+                        
                 var array = lista_controllo()[selected_floor];
-                console.log(lista_controllo());
-                console.log(array);
-                console.log(selected_floor);
-                if ((array.length == 0) || (list.selectedIndex == 0))
+                
+                if ((array.length == 0) && (list.selectedIndex == 0))
                         isvalid = (value != '') && (value.match(/\S/) != null);
                         
                 else        
@@ -343,7 +354,7 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
                 text.value = '';
                 list.selectedIndex = 0;
                 
-                esclude = null;
+                esclude = undefined;
                 
                 // elimino le options create
                 var children = list.children;
@@ -370,7 +381,11 @@ function manageChangeFloor(checkbox_id, text_id, list_id, container_id, id_lista
                 
                 if (value != '') {
                         checkbox.checked = true;
-                        s_text.value = value;
+                        text.value = value;
+                        s_text.show(); 
+                        esclude = value; 
+                        
+                        validate();      
                 }
         }
 }
@@ -448,7 +463,7 @@ function marker_data() {
                         value['lift'] = lift_o.value();
                 
                 if (stair_o.isChecked()) 
-                        valued['stair'] = stair_o.value();         
+                        value['stair'] = stair_o.value();         
                 
                 return value;
         }
@@ -460,7 +475,9 @@ function marker_data() {
                 lift_o.edit(lift);
                 stair_o.edit(stair);
                 room_o.edit(room_name, room_link, room_people, room_other);
-                access = access_;
+                
+                if (access_ == "true")
+                        access.click();
         }
 }
 

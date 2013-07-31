@@ -47,9 +47,9 @@ function cancelNewMarker(){
         mapGenerator.dismissNewMarker();
 }   
 
-function setMarkerData(marker) {
-        console.log(marker)
-        form.edit_marker(marker);
+function setMarkerData(RFID, access, stair, elevator, room_name, room_people, room_link, room_other) {
+                
+        form.edit_marker(RFID, access, stair, elevator, room_name, room_people, room_link, room_other);
 }
 
 
@@ -92,7 +92,7 @@ function getRFIDList() {
         
         for (var j in json) 
                 out.push(json[j]);
-        
+       
         return out;
 }
 
